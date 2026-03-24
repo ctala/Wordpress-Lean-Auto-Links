@@ -173,6 +173,7 @@ final class Installer
         $actions = [
             'leanautolinks_process_single',
             'leanautolinks_process_batch',
+            'leanautolinks_process_batch_recurring',
             'leanautolinks_warm_cache',
             'leanautolinks_recache_post',
         ];

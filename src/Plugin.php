@@ -187,6 +187,10 @@ final class Plugin
             $job->process_batch($args);
         });
 
+        add_action(LinkProcessorJob::RECURRING_HOOK, static function () use ($job): void {
+            $job->process_batch([]);
+        });
+
         add_action('leanautolinks_warm_cache', static function (array $args) use ($job): void {
             // Cache warming: re-process recent posts in batches.
             $job->process_batch($args);

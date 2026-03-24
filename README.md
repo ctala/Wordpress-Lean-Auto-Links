@@ -2,7 +2,7 @@
 
 > Lean, API-first automated internal linking for high-volume WordPress sites.
 
-![WordPress Plugin Version](https://img.shields.io/badge/WordPress-Plugin_v0.2.0-blue?logo=wordpress)
+![WordPress Plugin Version](https://img.shields.io/badge/WordPress-Plugin_v0.3.0-blue?logo=wordpress)
 ![PHP 8.1+](https://img.shields.io/badge/PHP-8.1%2B-777BB4?logo=php&logoColor=white)
 ![License: GPLv2](https://img.shields.io/badge/License-GPLv2-green.svg)
 
@@ -130,6 +130,32 @@ curl https://your-site.com/wp-json/leanautolinks/v1/health \
   "action_scheduler": "available"
 }
 ```
+
+## System Cron (Recommended for Production)
+
+WordPress cron (WP-Cron) relies on site traffic to trigger scheduled tasks. On sites with aggressive page caching (Cloudflare, Varnish, etc.) or low traffic, WP-Cron may not fire reliably, causing queue processing to stall.
+
+For production sites, we recommend replacing WP-Cron with a system cron job:
+
+### 1. Disable WP-Cron HTTP triggers
+
+Add to `wp-config.php`:
+
+```php
+define('DISABLE_WP_CRON', true);
+```
+
+### 2. Add a system cron job
+
+```bash
+# Option A: curl (works on any server)
+* * * * * curl -s https://your-site.com/wp-cron.php > /dev/null 2>&1
+
+# Option B: WP-CLI (more efficient, no HTTP overhead)
+* * * * * cd /path/to/wordpress && wp cron event run --due-now > /dev/null 2>&1
+```
+
+This ensures Action Scheduler processes batches every 60 seconds regardless of site traffic. The plugin's health check will warn you if `DISABLE_WP_CRON` is not set and there are pending queue items.
 
 ## Agent Integration
 
