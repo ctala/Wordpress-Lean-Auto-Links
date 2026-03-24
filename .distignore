@@ -1,0 +1,14 @@
+# Files to exclude from production builds / wordpress.org SVN
+.git
+.github
+.gitignore
+.distignore
+tests
+bin
+phpunit.xml
+composer.lock
+*.cache
+AGENTS.md
+README.es.md
+node_modules
+vendor

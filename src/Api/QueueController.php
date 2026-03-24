@@ -89,6 +89,7 @@ final class QueueController extends RestController
 
         // Count total.
         $count_sql = "SELECT COUNT(*) FROM {$table} WHERE {$where}";
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $total     = empty($params)
             ? (int) $wpdb->get_var($count_sql)
             : (int) $wpdb->get_var($wpdb->prepare($count_sql, ...$params));
@@ -105,6 +106,7 @@ final class QueueController extends RestController
                 ORDER BY q.priority ASC, q.scheduled_at DESC
                 LIMIT %d OFFSET %d";
 
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $results  = $wpdb->get_results($wpdb->prepare($sql, ...$query_params));
         $response = new \WP_REST_Response($results ?: [], 200);
 
@@ -121,6 +123,7 @@ final class QueueController extends RestController
         $post_id = (int) $request->get_param('post_id');
         $table   = $wpdb->prefix . 'lw_queue';
 
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $item = $wpdb->get_row(
             $wpdb->prepare("SELECT * FROM {$table} WHERE post_id = %d", $post_id)
         );
@@ -169,6 +172,7 @@ final class QueueController extends RestController
         }
 
         $sql      = "SELECT ID FROM {$wpdb->posts} WHERE {$where}";
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $post_ids = $wpdb->get_col($wpdb->prepare($sql, ...$params));
         $enqueued = 0;
 
@@ -206,10 +210,12 @@ final class QueueController extends RestController
 
         $table = $wpdb->prefix . 'lw_queue';
 
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $count = (int) $wpdb->get_var(
             "SELECT COUNT(*) FROM {$table} WHERE status = 'failed'"
         );
 
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $wpdb->query(
             "UPDATE {$table} SET status = 'pending', attempts = 0, error_log = NULL, processed_at = NULL WHERE status = 'failed'"
         );
@@ -242,10 +248,12 @@ final class QueueController extends RestController
 
         $table = $wpdb->prefix . 'lw_queue';
 
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $count = (int) $wpdb->get_var(
             "SELECT COUNT(*) FROM {$table} WHERE status = 'done'"
         );
 
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $wpdb->query("DELETE FROM {$table} WHERE status = 'done'");
 
         return new \WP_REST_Response([

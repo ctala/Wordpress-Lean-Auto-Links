@@ -83,7 +83,7 @@ final class RuleMatcherEngine
         ];
 
         // Guard: skip content that is too short for meaningful linking.
-        $stripped_length = mb_strlen(strip_tags($content), 'UTF-8');
+        $stripped_length = mb_strlen(wp_strip_all_tags($content), 'UTF-8');
         if ($stripped_length < $this->min_content_length) {
             return $result;
         }
@@ -103,7 +103,7 @@ final class RuleMatcherEngine
         }
 
         // Calculate word count for density limits.
-        $plain_text = strip_tags($content);
+        $plain_text = wp_strip_all_tags($content);
         $word_count = $this->word_count($plain_text);
 
         // Sort rules by priority.
