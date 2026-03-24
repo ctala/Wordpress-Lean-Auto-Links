@@ -131,11 +131,54 @@ curl https://your-site.com/wp-json/leanautolinks/v1/health \
 }
 ```
 
+## WP-CLI Commands
+
+LeanAutoLinks includes WP-CLI commands for managing the plugin from the terminal.
+
+### Force process all pending posts
+
+For initial setup or migrations on large sites, use `process-now` to bypass the cron scheduler and process everything immediately:
+
+```bash
+# Process all pending posts (default batch size from settings)
+wp leanautolinks process-now
+
+# Process with larger batches for faster throughput
+wp leanautolinks process-now --batch-size=100
+```
+
+This runs as a PHP CLI process -- it doesn't affect site performance and has no timeout. On a site with 25,000 posts, expect ~30 minutes with `--batch-size=100` (~42,000 posts/hour).
+
+**Recommended for:**
+- First-time setup on a site with existing content
+- Migrating from another internal linking plugin
+- Re-processing after bulk rule changes
+
+### Other commands
+
+```bash
+# Enqueue all published posts for reprocessing
+wp leanautolinks bulk-reprocess
+
+# View queue statistics
+wp leanautolinks queue-stats
+
+# Cache management
+wp leanautolinks cache flush
+wp leanautolinks cache stats
+wp leanautolinks cache warm
+
+# Seed test data (development only)
+wp leanautolinks seed --posts=15000 --actors=500 --glossary=500 --affiliates=100
+```
+
 ## System Cron (Recommended for Production)
 
-WordPress cron (WP-Cron) relies on site traffic to trigger scheduled tasks. On sites with aggressive page caching (Cloudflare, Varnish, etc.) or low traffic, WP-Cron may not fire reliably, causing queue processing to stall.
+By default, LeanAutoLinks uses WordPress cron (WP-Cron) for background processing. This works well on most sites with regular traffic.
 
-For production sites, we recommend replacing WP-Cron with a system cron job:
+However, WP-Cron relies on site visits to trigger. On sites with aggressive page caching (Cloudflare, Varnish, etc.) or low traffic, the queue may stall. Managed hosts like WP Engine, Kinsta, and Pantheon handle this automatically.
+
+For self-managed servers, replace WP-Cron with a system cron:
 
 ### 1. Disable WP-Cron HTTP triggers
 
@@ -148,14 +191,16 @@ define('DISABLE_WP_CRON', true);
 ### 2. Add a system cron job
 
 ```bash
-# Option A: curl (works on any server)
-* * * * * curl -s https://your-site.com/wp-cron.php > /dev/null 2>&1
-
-# Option B: WP-CLI (more efficient, no HTTP overhead)
+# Option A: WP-CLI (recommended, no HTTP overhead)
 * * * * * cd /path/to/wordpress && wp cron event run --due-now > /dev/null 2>&1
+
+# Option B: curl (works without WP-CLI)
+* * * * * curl -s https://your-site.com/wp-cron.php?doing_wp_cron > /dev/null 2>&1
 ```
 
-This ensures Action Scheduler processes batches every 60 seconds regardless of site traffic. The plugin's health check will warn you if `DISABLE_WP_CRON` is not set and there are pending queue items.
+This processes batches every 60 seconds regardless of site traffic. The plugin's health check warns when `DISABLE_WP_CRON` is not set and queue items are pending.
+
+**Note:** If you use Option B (curl) with `DISABLE_WP_CRON`, make sure your `wp-cron.php` is not blocked by your web server or firewall.
 
 ## Agent Integration
 

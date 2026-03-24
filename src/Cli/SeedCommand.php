@@ -192,6 +192,78 @@ final class SeedCommand
     }
 
     /**
+     * Force-process all pending queue items immediately (bypasses cron).
+     *
+     * Runs batches in a tight loop until the queue is empty.
+     * Ideal for initial setup, migrations, or sites with many posts.
+     *
+     * ## OPTIONS
+     *
+     * [--batch-size=<size>]
+     * : Posts per batch. Default: value from settings (25).
+     *
+     * ## EXAMPLES
+     *
+     *     wp leanautolinks process-now
+     *     wp leanautolinks process-now --batch-size=100
+     *
+     * @subcommand process-now
+     * @param array<string> $args
+     * @param array<string, string> $assoc_args
+     */
+    public function process_now(array $args, array $assoc_args): void
+    {
+        $queue = new QueueRepository();
+        $stats = $queue->get_stats();
+        $total_pending = $stats['pending'];
+
+        if ($total_pending === 0) {
+            \WP_CLI::success('No pending posts in queue.');
+            return;
+        }
+
+        $batch_size = isset($assoc_args['batch-size'])
+            ? (int) $assoc_args['batch-size']
+            : (int) get_option('leanautolinks_batch_size', 25);
+
+        \WP_CLI::log(sprintf('Processing %d pending posts (batch size: %d)...', $total_pending, $batch_size));
+
+        $job = new \LeanAutoLinks\Jobs\LinkProcessorJob(
+            $queue,
+            new \LeanAutoLinks\Repositories\AppliedLinksRepository(),
+            new \LeanAutoLinks\Repositories\PerformanceRepository()
+        );
+
+        $progress = \WP_CLI\Utils\make_progress_bar('Processing posts', $total_pending);
+        $processed = 0;
+        $start = microtime(true);
+
+        while (true) {
+            $pending = $queue->get_pending($batch_size);
+            if (empty($pending)) {
+                break;
+            }
+
+            foreach ($pending as $item) {
+                $job->process_single((int) $item->post_id);
+                $processed++;
+                $progress->tick();
+            }
+        }
+
+        $progress->finish();
+        $elapsed = round(microtime(true) - $start, 1);
+        $rate = $elapsed > 0 ? round($processed / $elapsed * 3600) : 0;
+
+        \WP_CLI::success(sprintf(
+            '%d posts processed in %ss (%s posts/hour).',
+            $processed,
+            $elapsed,
+            number_format($rate)
+        ));
+    }
+
+    /**
      * Cache management subcommands.
      *
      * ## EXAMPLES
