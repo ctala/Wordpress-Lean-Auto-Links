@@ -33,6 +33,7 @@ final class ExclusionsRepository
     {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $results = $wpdb->get_results(
             "SELECT * FROM {$this->table} ORDER BY type ASC, id ASC"
         );
@@ -50,6 +51,7 @@ final class ExclusionsRepository
     {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $results = $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT * FROM {$this->table} WHERE type = %s ORDER BY id ASC",
@@ -70,6 +72,7 @@ final class ExclusionsRepository
     {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
         $wpdb->insert(
             $this->table,
             [
@@ -89,6 +92,7 @@ final class ExclusionsRepository
     {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $rows = $wpdb->delete($this->table, ['id' => $id], ['%d']);
 
         return $rows !== false && $rows > 0;
@@ -106,6 +110,7 @@ final class ExclusionsRepository
     {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $count = (int) $wpdb->get_var(
             $wpdb->prepare(
                 "SELECT COUNT(*) FROM {$this->table} WHERE type = %s AND value = %s",

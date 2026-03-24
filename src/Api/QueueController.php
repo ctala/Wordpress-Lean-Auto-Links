@@ -89,10 +89,13 @@ final class QueueController extends RestController
 
         // Count total.
         $count_sql = "SELECT COUNT(*) FROM {$table} WHERE {$where}";
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $total     = empty($params)
-            ? (int) $wpdb->get_var($count_sql)
-            : (int) $wpdb->get_var($wpdb->prepare($count_sql, ...$params));
+        if (empty($params)) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Safe: table name from $wpdb->prefix.
+            $total = (int) $wpdb->get_var($count_sql);
+        } else {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Safe: table name from $wpdb->prefix, values via prepare().
+            $total = (int) $wpdb->get_var($wpdb->prepare($count_sql, ...$params));
+        }
 
         // Fetch with post titles via LEFT JOIN.
         $query_params   = $params;
@@ -106,7 +109,7 @@ final class QueueController extends RestController
                 ORDER BY q.priority ASC, q.scheduled_at DESC
                 LIMIT %d OFFSET %d";
 
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Safe: table name from $wpdb->prefix, values via prepare().
         $results  = $wpdb->get_results($wpdb->prepare($sql, ...$query_params));
         $response = new \WP_REST_Response($results ?: [], 200);
 
@@ -171,8 +174,8 @@ final class QueueController extends RestController
             $params[] = sanitize_text_field($body['date_before']);
         }
 
-        $sql      = "SELECT ID FROM {$wpdb->posts} WHERE {$where}";
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $sql = "SELECT ID FROM {$wpdb->posts} WHERE {$where}";
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Safe: table name from $wpdb->posts, values via prepare().
         $post_ids = $wpdb->get_col($wpdb->prepare($sql, ...$params));
         $enqueued = 0;
 

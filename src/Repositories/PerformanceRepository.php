@@ -129,10 +129,8 @@ final class PerformanceRepository
         $params[] = $limit;
         $params[] = $offset;
 
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $results = $wpdb->get_results(
-            $wpdb->prepare($sql, ...$params)
-        );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Safe: table name from $wpdb->prefix, values via prepare().
+        $results = $wpdb->get_results($wpdb->prepare($sql, ...$params));
 
         return is_array($results) ? $results : [];
     }

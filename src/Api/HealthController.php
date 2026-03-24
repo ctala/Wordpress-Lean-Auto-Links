@@ -54,7 +54,9 @@ final class HealthController extends RestController
 
         // Rules count.
         $rules_table  = $wpdb->prefix . 'lw_rules';
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $total_rules  = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$rules_table}");
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $active_rules = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$rules_table} WHERE is_active = 1");
 
         // Processing stats (last 24h).

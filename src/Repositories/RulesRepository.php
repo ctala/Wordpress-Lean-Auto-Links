@@ -32,6 +32,7 @@ final class RulesRepository
     {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $results = $wpdb->get_results(
             "SELECT * FROM {$this->table} WHERE is_active = 1 ORDER BY priority ASC, id ASC"
         );
@@ -49,6 +50,7 @@ final class RulesRepository
     {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $results = $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT * FROM {$this->table} WHERE rule_type = %s AND is_active = 1 ORDER BY priority ASC, id ASC",
@@ -66,6 +68,7 @@ final class RulesRepository
     {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $result = $wpdb->get_row(
             $wpdb->prepare("SELECT * FROM {$this->table} WHERE id = %d", $id)
         );
@@ -99,6 +102,7 @@ final class RulesRepository
 
         $data = array_merge($defaults, $data);
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
         $wpdb->insert(
             $this->table,
             [
@@ -158,6 +162,7 @@ final class RulesRepository
             return false;
         }
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $rows = $wpdb->update(
             $this->table,
             $update_data,
@@ -176,6 +181,7 @@ final class RulesRepository
     {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $rows = $wpdb->delete($this->table, ['id' => $id], ['%d']);
 
         return $rows !== false && $rows > 0;
@@ -188,6 +194,7 @@ final class RulesRepository
     {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $rows = $wpdb->query(
             $wpdb->prepare(
                 "UPDATE {$this->table} SET is_active = 1 - is_active WHERE id = %d",

@@ -163,6 +163,7 @@ final class AdminPage
             wp_die(esc_html__('You do not have sufficient permissions to access this page.', 'leanautolinks'));
         }
 
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Query parameter for tab navigation, no state change.
         $current_tab = isset($_GET['tab']) ? sanitize_text_field(wp_unslash($_GET['tab'])) : 'dashboard';
         $tabs = [
             'dashboard'  => __('Dashboard', 'leanautolinks'),
@@ -238,7 +239,9 @@ final class AdminPage
         $perf_summary = $this->performance_repo->get_summary('24h');
 
         $rules_table  = $wpdb->prefix . 'lw_rules';
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $total_rules  = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$rules_table}");
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $active_rules = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$rules_table} WHERE is_active = 1");
 
         $has_object_cache = wp_using_ext_object_cache();
@@ -251,6 +254,7 @@ final class AdminPage
 
         // Links applied today.
         $applied_table = $wpdb->prefix . 'lw_applied_links';
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $links_today   = (int) $wpdb->get_var(
             $wpdb->prepare(
                 "SELECT COUNT(*) FROM {$applied_table} WHERE rule_id != 0 AND DATE(applied_at) = %s",
@@ -265,6 +269,7 @@ final class AdminPage
         $recent_queue = [];
         if (empty($recent_log)) {
             $queue_table = $wpdb->prefix . 'lw_queue';
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
             $recent_queue = $wpdb->get_results(
                 "SELECT q.*, p.post_title
                  FROM {$queue_table} q
@@ -460,6 +465,7 @@ final class AdminPage
         global $wpdb;
 
         // Detail view: show posts linked by a specific rule.
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Query parameter for rule detail view, no state change.
         $view_rule_id = isset($_GET['view_rule']) ? (int) $_GET['view_rule'] : 0;
         if ($view_rule_id > 0) {
             $this->render_rule_linked_posts($view_rule_id);
@@ -469,8 +475,11 @@ final class AdminPage
         $table = $wpdb->prefix . 'lw_rules';
 
         // Filters.
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Query parameters for filtering rules list, no state change.
         $filter_type   = isset($_GET['rule_type']) ? sanitize_text_field(wp_unslash($_GET['rule_type'])) : '';
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Query parameter for filtering rules list, no state change.
         $filter_active = isset($_GET['is_active']) ? sanitize_text_field(wp_unslash($_GET['is_active'])) : '';
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Query parameter for search, no state change.
         $search        = isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
 
         $where  = '1=1';
@@ -493,17 +502,23 @@ final class AdminPage
 
         // Count total for pagination.
         $count_sql = "SELECT COUNT(*) FROM {$table} WHERE {$where}";
-        $total_rules_count = empty($params)
-            ? (int) $wpdb->get_var($count_sql)
-            : (int) $wpdb->get_var($wpdb->prepare($count_sql, ...$params));
+        if (empty($params)) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Safe: table name from $wpdb->prefix.
+            $total_rules_count = (int) $wpdb->get_var($count_sql);
+        } else {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Safe: table name from $wpdb->prefix, values via prepare().
+            $total_rules_count = (int) $wpdb->get_var($wpdb->prepare($count_sql, ...$params));
+        }
 
         $per_page    = 50;
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Query parameter for pagination, no state change.
         $current_page = isset($_GET['paged']) ? max(1, (int) $_GET['paged']) : 1;
         $total_pages = max(1, (int) ceil($total_rules_count / $per_page));
         $offset      = ($current_page - 1) * $per_page;
 
         $sql = "SELECT * FROM {$table} WHERE {$where} ORDER BY priority ASC, id ASC LIMIT %d OFFSET %d";
         $query_params = array_merge($params, [$per_page, $offset]);
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $rules = $wpdb->get_results($wpdb->prepare($sql, ...$query_params));
 
         $page_url = admin_url('tools.php?page=leanautolinks&tab=rules');
@@ -514,6 +529,7 @@ final class AdminPage
             $rule_ids = array_map(fn($r) => (int) $r->id, $rules);
             $applied_table = $wpdb->prefix . 'lw_applied_links';
             $placeholders = implode(',', array_fill(0, count($rule_ids), '%d'));
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
             $counts = $wpdb->get_results(
                 $wpdb->prepare(
                     "SELECT rule_id, COUNT(DISTINCT post_id) as post_count
@@ -888,6 +904,7 @@ final class AdminPage
         $rules_table   = $wpdb->prefix . 'lw_rules';
         $applied_table = $wpdb->prefix . 'lw_applied_links';
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $rule = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$rules_table} WHERE id = %d", $rule_id));
 
         if (!$rule) {
@@ -897,7 +914,9 @@ final class AdminPage
 
         // Pagination.
         $per_page     = 50;
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Query parameter for pagination, no state change.
         $current_page = isset($_GET['paged']) ? max(1, (int) $_GET['paged']) : 1;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $total_count  = (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(DISTINCT post_id) FROM {$applied_table} WHERE rule_id = %d",
             $rule_id
@@ -905,6 +924,7 @@ final class AdminPage
         $total_pages = max(1, (int) ceil($total_count / $per_page));
         $offset      = ($current_page - 1) * $per_page;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $linked_posts = $wpdb->get_results($wpdb->prepare(
             "SELECT DISTINCT al.post_id, p.post_title, p.post_type, p.post_status,
                     COUNT(*) as link_count, MAX(al.applied_at) as last_applied
@@ -1025,7 +1045,9 @@ final class AdminPage
         $queue_stats = $this->queue_repo->get_stats();
         $table       = $wpdb->prefix . 'lw_queue';
 
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Query parameter for filtering queue by status, no state change.
         $filter_status = isset($_GET['status']) ? sanitize_text_field(wp_unslash($_GET['status'])) : '';
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Query parameter for search, no state change.
         $search        = isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
 
         $where  = '1=1';
@@ -1043,11 +1065,16 @@ final class AdminPage
 
         // Count total for pagination.
         $count_sql = "SELECT COUNT(*) FROM {$table} q WHERE {$where}";
-        $total_queue_items = empty($params)
-            ? (int) $wpdb->get_var($count_sql)
-            : (int) $wpdb->get_var($wpdb->prepare($count_sql, ...$params));
+        if (empty($params)) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Safe: table name from $wpdb->prefix.
+            $total_queue_items = (int) $wpdb->get_var($count_sql);
+        } else {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Safe: table name from $wpdb->prefix, values via prepare().
+            $total_queue_items = (int) $wpdb->get_var($wpdb->prepare($count_sql, ...$params));
+        }
 
         $queue_per_page    = 50;
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Query parameter for pagination, no state change.
         $queue_current_page = isset($_GET['paged']) ? max(1, (int) $_GET['paged']) : 1;
         $queue_total_pages = max(1, (int) ceil($total_queue_items / $queue_per_page));
         $queue_offset      = ($queue_current_page - 1) * $queue_per_page;
@@ -1060,6 +1087,7 @@ final class AdminPage
                   WHERE {$where}
                   ORDER BY q.priority ASC, q.scheduled_at DESC
                   LIMIT %d OFFSET %d";
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $items = $wpdb->get_results($wpdb->prepare($sql, ...$query_params));
 
         $total = $queue_stats['total'];
@@ -1139,7 +1167,7 @@ final class AdminPage
                     <?php else :
                         $perf_table = $wpdb->prefix . 'lw_performance_log';
                         // Calculate ETA from observed throughput (posts processed in last 5 minutes).
-                        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+                        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
                         $recent_count = (int) $wpdb->get_var(
                             "SELECT COUNT(*) FROM {$perf_table} WHERE event_type = 'process_single' AND logged_at >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)"
                         );
@@ -1149,7 +1177,7 @@ final class AdminPage
                             $eta_seconds = (int) ($remaining_posts / $posts_per_second);
                         } else {
                             // Fallback: estimate from avg processing time + 60s cron interval.
-                            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+                            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
                             $avg_ms = (float) $wpdb->get_var(
                                 "SELECT AVG(duration_ms) FROM {$perf_table} WHERE event_type = 'process_single'"
                             );
@@ -1181,8 +1209,8 @@ final class AdminPage
                         endif;
                         ?>
                         &mdash; <span class="lw-processing-pulse"><?php
-                            /* translators: %s: time ago like "30s" or "1m" */
                             echo esc_html(sprintf(
+                                /* translators: %s: time ago like "30s" or "1m" */
                                 __('Last batch %s ago', 'leanautolinks'),
                                 $seconds_since_last < 60
                                     ? $seconds_since_last . 's'
@@ -1360,6 +1388,7 @@ final class AdminPage
         global $wpdb;
 
         $excl_table = $wpdb->prefix . 'lw_exclusions';
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Query parameter for search, no state change.
         $excl_search = isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
 
         $excl_where  = '1=1';
@@ -1373,16 +1402,22 @@ final class AdminPage
         }
 
         $count_sql = "SELECT COUNT(*) FROM {$excl_table} WHERE {$excl_where}";
-        $total_exclusions = empty($excl_params)
-            ? (int) $wpdb->get_var($count_sql)
-            : (int) $wpdb->get_var($wpdb->prepare($count_sql, ...$excl_params));
+        if (empty($excl_params)) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Safe: table name from $wpdb->prefix.
+            $total_exclusions = (int) $wpdb->get_var($count_sql);
+        } else {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Safe: table name from $wpdb->prefix, values via prepare().
+            $total_exclusions = (int) $wpdb->get_var($wpdb->prepare($count_sql, ...$excl_params));
+        }
 
         $excl_per_page    = 50;
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Query parameter for pagination, no state change.
         $excl_current_page = isset($_GET['paged']) ? max(1, (int) $_GET['paged']) : 1;
         $excl_total_pages = max(1, (int) ceil($total_exclusions / $excl_per_page));
         $excl_offset      = ($excl_current_page - 1) * $excl_per_page;
 
         $query_params = array_merge($excl_params, [$excl_per_page, $excl_offset]);
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Safe: dynamic WHERE clause with correct placeholder count.
         $exclusions = $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT * FROM {$excl_table} WHERE {$excl_where} ORDER BY created_at DESC LIMIT %d OFFSET %d",
@@ -1489,6 +1524,7 @@ final class AdminPage
                 <div class="tablenav-pages">
                     <span class="displaying-num">
                         <?php echo esc_html(sprintf(
+                            /* translators: %d: number of exclusion rules */
                             _n('%d exclusion', '%d exclusions', $total_exclusions, 'leanautolinks'),
                             $total_exclusions
                         )); ?>
@@ -1683,6 +1719,7 @@ final class AdminPage
 
     private function ajax_save_settings(): void
     {
+        // Nonce already verified in handle_ajax() via check_ajax_referer().
         $settings_map = [
             'max_links_per_post'        => 'leanautolinks_max_links_per_post',
             'max_links_per_1000_words'  => 'leanautolinks_max_links_per_1000_words',
@@ -1697,15 +1734,21 @@ final class AdminPage
         ];
 
         foreach ($settings_map as $form_key => $option_key) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
             if (isset($_POST[$form_key])) {
-                update_option($option_key, (int) wp_unslash($_POST[$form_key]));
+                // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in handle_ajax(). Value cast to int.
+                update_option($option_key, absint(wp_unslash($_POST[$form_key])));
             }
         }
 
         // Post types as array.
-        $post_types = isset($_POST['supported_post_types']) && is_array($_POST['supported_post_types'])
-            ? array_map('sanitize_text_field', wp_unslash($_POST['supported_post_types']))
-            : ['post'];
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
+        if (isset($_POST['supported_post_types']) && is_array($_POST['supported_post_types'])) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
+            $post_types = array_map('sanitize_text_field', wp_unslash($_POST['supported_post_types']));
+        } else {
+            $post_types = ['post'];
+        }
 
         update_option('leanautolinks_supported_post_types', $post_types);
 
@@ -1714,7 +1757,10 @@ final class AdminPage
 
     private function ajax_create_rule(): void
     {
+        // Nonce already verified in handle_ajax() via check_ajax_referer().
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
         $keyword    = isset($_POST['keyword']) ? sanitize_text_field(wp_unslash($_POST['keyword'])) : '';
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
         $target_url = isset($_POST['target_url']) ? esc_url_raw(wp_unslash($_POST['target_url'])) : '';
 
         if (empty($keyword) || empty($target_url)) {
@@ -1724,14 +1770,21 @@ final class AdminPage
         $data = [
             'keyword'        => $keyword,
             'target_url'     => $target_url,
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
             'rule_type'      => isset($_POST['rule_type']) ? sanitize_text_field(wp_unslash($_POST['rule_type'])) : 'internal',
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
             'entity_type'    => !empty($_POST['entity_type']) ? sanitize_text_field(wp_unslash($_POST['entity_type'])) : null,
-            'priority'       => isset($_POST['priority']) ? (int) wp_unslash($_POST['priority']) : 10,
-            'max_per_post'   => isset($_POST['max_per_post']) ? (int) wp_unslash($_POST['max_per_post']) : 1,
-            'case_sensitive' => isset($_POST['case_sensitive']) ? (int) wp_unslash($_POST['case_sensitive']) : 0,
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in handle_ajax(). Value cast to int.
+            'priority'       => isset($_POST['priority']) ? absint(wp_unslash($_POST['priority'])) : 10,
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in handle_ajax(). Value cast to int.
+            'max_per_post'   => isset($_POST['max_per_post']) ? absint(wp_unslash($_POST['max_per_post'])) : 1,
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in handle_ajax(). Value cast to int.
+            'case_sensitive' => isset($_POST['case_sensitive']) ? absint(wp_unslash($_POST['case_sensitive'])) : 0,
             'is_active'      => 1,
-            'nofollow'       => isset($_POST['nofollow']) ? (int) wp_unslash($_POST['nofollow']) : 0,
-            'sponsored'      => isset($_POST['sponsored']) ? (int) wp_unslash($_POST['sponsored']) : 0,
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in handle_ajax(). Value cast to int.
+            'nofollow'       => isset($_POST['nofollow']) ? absint(wp_unslash($_POST['nofollow'])) : 0,
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in handle_ajax(). Value cast to int.
+            'sponsored'      => isset($_POST['sponsored']) ? absint(wp_unslash($_POST['sponsored'])) : 0,
         ];
 
         $id = $this->rules_repo->create($data);
@@ -1751,13 +1804,17 @@ final class AdminPage
 
     private function ajax_update_rule(): void
     {
-        $id = isset($_POST['rule_id']) ? (int) wp_unslash($_POST['rule_id']) : 0;
+        // Nonce already verified in handle_ajax() via check_ajax_referer().
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
+        $id = isset($_POST['rule_id']) ? absint(wp_unslash($_POST['rule_id'])) : 0;
 
         if ($id <= 0) {
             wp_send_json_error(__('Invalid rule ID.', 'leanautolinks'));
         }
 
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
         $keyword    = isset($_POST['keyword']) ? sanitize_text_field(wp_unslash($_POST['keyword'])) : '';
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
         $target_url = isset($_POST['target_url']) ? esc_url_raw(wp_unslash($_POST['target_url'])) : '';
 
         if (empty($keyword) || empty($target_url)) {
@@ -1767,13 +1824,20 @@ final class AdminPage
         $data = [
             'keyword'        => $keyword,
             'target_url'     => $target_url,
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
             'rule_type'      => isset($_POST['rule_type']) ? sanitize_text_field(wp_unslash($_POST['rule_type'])) : 'internal',
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
             'entity_type'    => !empty($_POST['entity_type']) ? sanitize_text_field(wp_unslash($_POST['entity_type'])) : null,
-            'priority'       => isset($_POST['priority']) ? (int) wp_unslash($_POST['priority']) : 10,
-            'max_per_post'   => isset($_POST['max_per_post']) ? (int) wp_unslash($_POST['max_per_post']) : 1,
-            'case_sensitive' => isset($_POST['case_sensitive']) ? (int) wp_unslash($_POST['case_sensitive']) : 0,
-            'nofollow'       => isset($_POST['nofollow']) ? (int) wp_unslash($_POST['nofollow']) : 0,
-            'sponsored'      => isset($_POST['sponsored']) ? (int) wp_unslash($_POST['sponsored']) : 0,
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in handle_ajax(). Value cast to int.
+            'priority'       => isset($_POST['priority']) ? absint(wp_unslash($_POST['priority'])) : 10,
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in handle_ajax(). Value cast to int.
+            'max_per_post'   => isset($_POST['max_per_post']) ? absint(wp_unslash($_POST['max_per_post'])) : 1,
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in handle_ajax(). Value cast to int.
+            'case_sensitive' => isset($_POST['case_sensitive']) ? absint(wp_unslash($_POST['case_sensitive'])) : 0,
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in handle_ajax(). Value cast to int.
+            'nofollow'       => isset($_POST['nofollow']) ? absint(wp_unslash($_POST['nofollow'])) : 0,
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in handle_ajax(). Value cast to int.
+            'sponsored'      => isset($_POST['sponsored']) ? absint(wp_unslash($_POST['sponsored'])) : 0,
         ];
 
         $updated = $this->rules_repo->update($id, $data);
@@ -1793,7 +1857,8 @@ final class AdminPage
 
     private function ajax_delete_rule(): void
     {
-        $id = isset($_POST['rule_id']) ? (int) wp_unslash($_POST['rule_id']) : 0;
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
+        $id = isset($_POST['rule_id']) ? absint(wp_unslash($_POST['rule_id'])) : 0;
 
         if ($id <= 0) {
             wp_send_json_error(__('Invalid rule ID.', 'leanautolinks'));
@@ -1808,7 +1873,8 @@ final class AdminPage
 
     private function ajax_toggle_rule(): void
     {
-        $id = isset($_POST['rule_id']) ? (int) wp_unslash($_POST['rule_id']) : 0;
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
+        $id = isset($_POST['rule_id']) ? absint(wp_unslash($_POST['rule_id'])) : 0;
 
         if ($id <= 0) {
             wp_send_json_error(__('Invalid rule ID.', 'leanautolinks'));
@@ -1829,7 +1895,9 @@ final class AdminPage
 
     private function ajax_create_exclusion(): void
     {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
         $type  = isset($_POST['excl_type']) ? sanitize_text_field(wp_unslash($_POST['excl_type'])) : '';
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
         $value = isset($_POST['excl_value']) ? sanitize_text_field(wp_unslash($_POST['excl_value'])) : '';
 
         $valid_types = ['post', 'url', 'keyword', 'post_type'];
@@ -1851,7 +1919,8 @@ final class AdminPage
 
     private function ajax_delete_exclusion(): void
     {
-        $id = isset($_POST['exclusion_id']) ? (int) wp_unslash($_POST['exclusion_id']) : 0;
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
+        $id = isset($_POST['exclusion_id']) ? absint(wp_unslash($_POST['exclusion_id'])) : 0;
 
         if ($id <= 0) {
             wp_send_json_error(__('Invalid exclusion ID.', 'leanautolinks'));
@@ -1868,6 +1937,7 @@ final class AdminPage
 
     private function ajax_bulk_action(): void
     {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
         $action = isset($_POST['bulk_type']) ? sanitize_text_field(wp_unslash($_POST['bulk_type'])) : '';
 
         switch ($action) {
@@ -1901,6 +1971,7 @@ final class AdminPage
         $supported_types = (array) get_option('leanautolinks_supported_post_types', ['post', 'page']);
         $placeholders    = implode(',', array_fill(0, count($supported_types), '%s'));
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Safe: dynamic IN() placeholders.
         $post_ids = $wpdb->get_col(
             $wpdb->prepare(
                 "SELECT ID FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type IN ({$placeholders})",
@@ -1935,8 +2006,10 @@ final class AdminPage
         global $wpdb;
 
         $table = $wpdb->prefix . 'lw_queue';
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Safe: table name from $wpdb->prefix.
         $count = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE status = 'failed'");
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Safe: table name from $wpdb->prefix.
         $wpdb->query(
             "UPDATE {$table} SET status = 'pending', attempts = 0, error_log = NULL, processed_at = NULL WHERE status = 'failed'"
         );
@@ -1962,7 +2035,9 @@ final class AdminPage
         global $wpdb;
 
         $table = $wpdb->prefix . 'lw_queue';
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Safe: table name from $wpdb->prefix.
         $count = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE status = 'done'");
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Safe: table name from $wpdb->prefix.
         $wpdb->query("DELETE FROM {$table} WHERE status = 'done'");
 
         wp_send_json_success(sprintf(
@@ -1974,9 +2049,13 @@ final class AdminPage
 
     private function ajax_bulk_delete_rules(): void
     {
-        $ids = isset($_POST['rule_ids']) && is_array($_POST['rule_ids'])
-            ? array_map('intval', wp_unslash($_POST['rule_ids']))
-            : [];
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
+        if (isset($_POST['rule_ids']) && is_array($_POST['rule_ids'])) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
+            $ids = array_map('absint', wp_unslash($_POST['rule_ids']));
+        } else {
+            $ids = [];
+        }
 
         if (empty($ids)) {
             wp_send_json_error(__('No rules selected.', 'leanautolinks'));
@@ -1997,9 +2076,13 @@ final class AdminPage
 
     private function ajax_bulk_update_rules(int $is_active): void
     {
-        $ids = isset($_POST['rule_ids']) && is_array($_POST['rule_ids'])
-            ? array_map('intval', wp_unslash($_POST['rule_ids']))
-            : [];
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
+        if (isset($_POST['rule_ids']) && is_array($_POST['rule_ids'])) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
+            $ids = array_map('absint', wp_unslash($_POST['rule_ids']));
+        } else {
+            $ids = [];
+        }
 
         if (empty($ids)) {
             wp_send_json_error(__('No rules selected.', 'leanautolinks'));

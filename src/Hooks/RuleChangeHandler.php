@@ -105,6 +105,7 @@ final class RuleChangeHandler
         // For updates and deletes, always include posts that previously had
         // this rule applied (they need to be reprocessed without the old link).
         if (in_array($action, ['updated', 'deleted', 'toggled'], true)) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
             $previously_linked = $wpdb->get_col(
                 $wpdb->prepare(
                     "SELECT DISTINCT post_id FROM {$wpdb->prefix}lw_applied_links WHERE rule_id = %d",
@@ -132,6 +133,7 @@ final class RuleChangeHandler
                     [self::BATCH_SIZE]
                 );
 
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
                 $matching = $wpdb->get_col(
                     $wpdb->prepare(
                         "SELECT ID FROM {$wpdb->posts}
