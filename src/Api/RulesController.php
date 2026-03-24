@@ -190,6 +190,21 @@ final class RulesController extends RestController
             return $this->error('invalid_rule_type', __('Rule type must be internal, affiliate, or entity.', 'leanautolinks'));
         }
 
+        // Duplicate keyword check.
+        $case_sensitive = !empty($body['case_sensitive']);
+        $existing = $this->repo->find_by_keyword(sanitize_text_field($body['keyword']), $case_sensitive);
+        if ($existing) {
+            return $this->error(
+                'duplicate_keyword',
+                sprintf(
+                    /* translators: %s: the duplicate keyword */
+                    __('The keyword "%s" is already used by another rule.', 'leanautolinks'),
+                    sanitize_text_field($body['keyword'])
+                ),
+                409
+            );
+        }
+
         $data = [
             'keyword'        => sanitize_text_field($body['keyword']),
             'target_url'     => esc_url_raw($body['target_url']),
@@ -233,6 +248,19 @@ final class RulesController extends RestController
         $data = [];
 
         if (isset($body['keyword'])) {
+            $case_sensitive = isset($body['case_sensitive']) ? (bool) $body['case_sensitive'] : (bool) $rule->case_sensitive;
+            $existing = $this->repo->find_by_keyword(sanitize_text_field($body['keyword']), $case_sensitive, $id);
+            if ($existing) {
+                return $this->error(
+                    'duplicate_keyword',
+                    sprintf(
+                        /* translators: %s: the duplicate keyword */
+                        __('The keyword "%s" is already used by another rule.', 'leanautolinks'),
+                        sanitize_text_field($body['keyword'])
+                    ),
+                    409
+                );
+            }
             $data['keyword'] = sanitize_text_field($body['keyword']);
         }
         if (isset($body['target_url'])) {
@@ -345,8 +373,23 @@ final class RulesController extends RestController
                 continue;
             }
 
+            $clean_keyword  = sanitize_text_field($rule_data['keyword']);
+            $case_sensitive = !empty($rule_data['case_sensitive']);
+
+            // Skip duplicate keywords.
+            $existing = $this->repo->find_by_keyword($clean_keyword, $case_sensitive);
+            if ($existing) {
+                $errors[] = sprintf(
+                    /* translators: 1: index, 2: keyword */
+                    __('Rule at index %1$d skipped: keyword "%2$s" already exists.', 'leanautolinks'),
+                    $index,
+                    $clean_keyword
+                );
+                continue;
+            }
+
             $data = [
-                'keyword'        => sanitize_text_field($rule_data['keyword']),
+                'keyword'        => $clean_keyword,
                 'target_url'     => esc_url_raw($rule_data['target_url']),
                 'rule_type'      => sanitize_text_field($rule_data['rule_type'] ?? 'internal'),
                 'entity_type'    => isset($rule_data['entity_type']) ? sanitize_text_field($rule_data['entity_type']) : null,

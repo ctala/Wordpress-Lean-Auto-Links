@@ -1767,6 +1767,18 @@ final class AdminPage
             wp_send_json_error(__('Keyword and Target URL are required.', 'leanautolinks'));
         }
 
+        // Duplicate keyword check.
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
+        $case_sensitive = isset($_POST['case_sensitive']) ? (bool) absint(wp_unslash($_POST['case_sensitive'])) : false;
+        $existing = $this->rules_repo->find_by_keyword($keyword, $case_sensitive);
+        if ($existing) {
+            wp_send_json_error(sprintf(
+                /* translators: %s: the duplicate keyword */
+                __('The keyword "%s" is already used by another rule.', 'leanautolinks'),
+                $keyword
+            ));
+        }
+
         $data = [
             'keyword'        => $keyword,
             'target_url'     => $target_url,
@@ -1819,6 +1831,18 @@ final class AdminPage
 
         if (empty($keyword) || empty($target_url)) {
             wp_send_json_error(__('Keyword and Target URL are required.', 'leanautolinks'));
+        }
+
+        // Duplicate keyword check (exclude current rule).
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_ajax().
+        $case_sensitive = isset($_POST['case_sensitive']) ? (bool) absint(wp_unslash($_POST['case_sensitive'])) : false;
+        $existing = $this->rules_repo->find_by_keyword($keyword, $case_sensitive, $id);
+        if ($existing) {
+            wp_send_json_error(sprintf(
+                /* translators: %s: the duplicate keyword */
+                __('The keyword "%s" is already used by another rule.', 'leanautolinks'),
+                $keyword
+            ));
         }
 
         $data = [
