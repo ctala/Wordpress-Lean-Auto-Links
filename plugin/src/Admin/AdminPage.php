@@ -1293,8 +1293,7 @@ final class AdminPage
         <!-- Queue Actions -->
         <div class="lw-section">
             <p>
-                <button type="button" class="button button-primary lw-ajax-action" data-action="bulk_reprocess" data-scope="all"
-                        onclick="return confirm(leanautolinksAdmin.strings.confirmBulk);">
+                <button type="button" class="button button-primary lw-ajax-action" data-action="bulk_reprocess" data-scope="all">
                     <?php echo esc_html__('Reprocess All Posts', 'leanautolinks'); ?>
                 </button>
                 <button type="button" class="button lw-ajax-action" data-action="retry_failed">
