@@ -5,6 +5,25 @@ All notable changes to the LeanAutoLinks plugin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-03-24
+
+### Fixed
+
+- **Plugin Check: 0 errors** -- resolved all 23 PHPCS errors reported by WordPress Plugin Check.
+- **Input sanitization** -- replaced `(int)` casts with `absint()` for all `$_POST` values, added `wp_unslash()` in KeywordMetaBox.
+- **PHPCS multi-line coverage** -- refactored ternary expressions to if/else so phpcs:ignore comments cover each branch correctly.
+- **Translators comments** -- moved `translators:` comments directly above `__()` and `_n()` calls as required by i18n standards.
+
+### Added
+
+- **`wp leanautolinks process-now`** -- WP-CLI command for immediate bulk processing without waiting for cron. Achieved 69,355 posts/hour on 25K test dataset.
+- **Observed throughput ETA** -- queue progress now calculates ETA from actual processing speed (last 5 minutes) instead of a fixed formula.
+- **Queue idle state** -- dashboard shows "Queue idle — waiting for cron trigger" when no batch has run in the last 2 minutes.
+
+### Changed
+
+- **Tested up to** bumped to WordPress 6.9.
+
 ## [0.3.0] - 2026-03-24
 
 ### Fixed
