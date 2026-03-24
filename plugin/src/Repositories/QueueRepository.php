@@ -34,6 +34,7 @@ final class QueueRepository
     {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $wpdb->query(
             $wpdb->prepare(
                 "INSERT INTO {$this->table} (post_id, status, triggered_by, priority, attempts, scheduled_at)
@@ -63,6 +64,7 @@ final class QueueRepository
     {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $results = $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT * FROM {$this->table}
@@ -83,6 +85,7 @@ final class QueueRepository
     {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $wpdb->update(
             $this->table,
             ['status' => 'processing'],
@@ -99,6 +102,7 @@ final class QueueRepository
     {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $wpdb->update(
             $this->table,
             [
@@ -118,6 +122,7 @@ final class QueueRepository
     {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $wpdb->update(
             $this->table,
             [
@@ -138,6 +143,7 @@ final class QueueRepository
     {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $wpdb->query(
             $wpdb->prepare(
                 "UPDATE {$this->table} SET attempts = attempts + 1 WHERE post_id = %d",
@@ -145,6 +151,7 @@ final class QueueRepository
             )
         );
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $attempts = $wpdb->get_var(
             $wpdb->prepare(
                 "SELECT attempts FROM {$this->table} WHERE post_id = %d",
@@ -164,6 +171,7 @@ final class QueueRepository
     {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $results = $wpdb->get_results(
             "SELECT status, COUNT(*) as count FROM {$this->table} GROUP BY status",
             OBJECT_K

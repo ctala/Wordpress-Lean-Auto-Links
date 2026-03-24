@@ -135,6 +135,7 @@ final class SeedCommand
         $supported_types = (array) get_option('leanautolinks_supported_post_types', ['post', 'page']);
         $placeholders    = implode(',', array_fill(0, count($supported_types), '%s'));
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
         $post_ids = $wpdb->get_col(
             $wpdb->prepare(
                 "SELECT ID FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type IN ({$placeholders})",

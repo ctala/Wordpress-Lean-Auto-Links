@@ -255,7 +255,7 @@ final class KeywordMetaBox
             wp_send_json_error(__('Permission denied.', 'leanautolinks'));
         }
 
-        $post_id = (int) ($_POST['post_id'] ?? 0);
+        $post_id = isset($_POST['post_id']) ? absint(wp_unslash($_POST['post_id'])) : 0;
 
         if ($post_id <= 0) {
             wp_send_json_error(__('Invalid post.', 'leanautolinks'));
@@ -326,8 +326,8 @@ final class KeywordMetaBox
             wp_send_json_error(__('Permission denied.', 'leanautolinks'));
         }
 
-        $post_id = (int) ($_POST['post_id'] ?? 0);
-        $keyword = sanitize_text_field($_POST['keyword'] ?? '');
+        $post_id = isset($_POST['post_id']) ? absint(wp_unslash($_POST['post_id'])) : 0;
+        $keyword = isset($_POST['keyword']) ? sanitize_text_field(wp_unslash($_POST['keyword'])) : '';
 
         if (empty($keyword)) {
             wp_send_json_error(__('Keyword is required.', 'leanautolinks'));
@@ -384,7 +384,7 @@ final class KeywordMetaBox
             wp_send_json_error(__('Permission denied.', 'leanautolinks'));
         }
 
-        $rule_id = (int) ($_POST['rule_id'] ?? 0);
+        $rule_id = isset($_POST['rule_id']) ? absint(wp_unslash($_POST['rule_id'])) : 0;
 
         if ($rule_id <= 0) {
             wp_send_json_error(__('Invalid rule ID.', 'leanautolinks'));

@@ -25,10 +25,12 @@ $leanautolinks_tables = [
 ];
 
 foreach ($leanautolinks_tables as $leanautolinks_table) {
-    $wpdb->query("DROP TABLE IF EXISTS {$leanautolinks_table}"); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+    $wpdb->query("DROP TABLE IF EXISTS {$leanautolinks_table}");
 }
 
 // 2. Delete all options prefixed with leanautolinks_.
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 $leanautolinks_options = $wpdb->get_col(
     "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE 'leanautolinks\_%'"
 );
