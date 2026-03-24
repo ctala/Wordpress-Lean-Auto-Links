@@ -92,6 +92,23 @@ Everything else → internal
 
 **Important:** The same keyword cannot be used in two different rules. API returns HTTP 409 if a duplicate keyword is detected. Self-linking is automatically prevented (a post about "startup" at /que-es-una-startup/ won't link "startup" to itself).
 
+### Reprocessing Rules
+
+The plugin only reprocesses posts that are actually affected by a change — never the entire site.
+
+| Event | What gets enqueued | Why |
+|---|---|---|
+| **Post saved** | Only that post | Content may have changed, needs re-matching |
+| **Rule created** | Posts whose `post_content` contains the keyword | New keyword might match existing content |
+| **Rule updated** | Posts previously linked by this rule + posts containing the new keyword | Old links need removing, new keyword needs matching |
+| **Rule deleted** | Posts previously linked by this rule | Links need to be removed from content |
+| **Rule toggled** | Posts previously linked + posts containing keyword | Same as update — link appears or disappears |
+| **Bulk reprocess** | All posts (or filtered subset) | Manual full rebuild via API or WP-CLI |
+
+**Scale-safe:** All enqueuing is paginated (500 posts per batch). A keyword like "startups" appearing in 10,000+ posts will enqueue all of them without memory issues. The `queue_repo->enqueue()` uses `INSERT ... ON DUPLICATE KEY UPDATE` so duplicate enqueues are no-ops.
+
+**Self-link prevention:** The engine automatically skips self-links. A post at `/que-es-una-startup/` will never link "startup" to itself, even if the rule matches.
+
 ### Queue
 Posts are processed asynchronously. When a post is saved or a bulk reprocess is triggered, post IDs are added to the **queue**. Action Scheduler picks them up in the background.
 

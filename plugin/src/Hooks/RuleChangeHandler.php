@@ -28,8 +28,8 @@ final class RuleChangeHandler
     /** Queue priority for rule-change triggered reprocessing. */
     private const PRIORITY_RULE_CHANGE = 30;
 
-    /** Maximum post IDs to process in a single LIKE query batch. */
-    private const BATCH_SIZE = 1000;
+    /** Maximum post IDs to enqueue per INSERT batch. */
+    private const ENQUEUE_BATCH = 500;
 
     private RulesRepository $rules_repo;
     private AppliedLinksRepository $applied_repo;
@@ -48,6 +48,19 @@ final class RuleChangeHandler
     /**
      * Handle a rule change event.
      *
+     * Reprocessing rules:
+     *   - created:  Enqueue all posts whose content contains the keyword.
+     *   - updated:  Enqueue posts previously linked by this rule (to remove old
+     *               link) + posts containing the new keyword (to add new link).
+     *   - deleted:  Enqueue posts previously linked by this rule (to remove link),
+     *               then delete applied_links records.
+     *   - toggled:  Same as updated (posts may gain or lose the link).
+     *
+     * Only affected posts are enqueued — never the full site. Posts are found
+     * by querying lw_applied_links (for existing links) and wp_posts.post_content
+     * LIKE (for potential new matches). Both queries are paginated to handle
+     * keywords appearing in 10,000+ posts without memory issues.
+     *
      * @param int    $rule_id The rule that was created, updated, deleted, or toggled.
      * @param string $action  One of 'created', 'updated', 'deleted', 'toggled'.
      */
@@ -56,24 +69,19 @@ final class RuleChangeHandler
         // Step 1: Invalidate all rule caches and increment version.
         RulesCache::flush();
 
-        // Step 2: Determine affected posts and enqueue them.
-        $affected_post_ids = $this->find_affected_posts($rule_id, $action);
-
-        if (empty($affected_post_ids)) {
-            return;
+        // Step 2: Enqueue posts previously linked by this rule.
+        $enqueued = 0;
+        if (in_array($action, ['updated', 'deleted', 'toggled'], true)) {
+            $enqueued += $this->enqueue_previously_linked($rule_id);
         }
 
-        // Step 3: Enqueue affected posts in batches.
-        foreach ($affected_post_ids as $post_id) {
-            $this->queue_repo->enqueue((int) $post_id, 'rule_change', self::PRIORITY_RULE_CHANGE);
-
-            // Invalidate processed content cache for this post.
-            wp_cache_delete("lw_processed:{$post_id}", 'leanautolinks');
-            wp_cache_delete("lw_meta:{$post_id}", 'leanautolinks');
+        // Step 3: Enqueue posts whose content contains the keyword.
+        if (in_array($action, ['created', 'updated', 'toggled'], true)) {
+            $enqueued += $this->enqueue_keyword_matches($rule_id);
         }
 
-        // Step 4: Schedule batch processing via Action Scheduler.
-        if (function_exists('as_schedule_single_action')) {
+        // Step 4: Schedule batch processing if any posts were enqueued.
+        if ($enqueued > 0 && function_exists('as_schedule_single_action')) {
             as_schedule_single_action(
                 time(),
                 'leanautolinks_process_batch',
@@ -82,73 +90,105 @@ final class RuleChangeHandler
             );
         }
 
-        // If the rule was deleted, clean up its applied links records.
+        // Step 5: If the rule was deleted, clean up its applied links records.
         if ($action === 'deleted') {
             $this->applied_repo->delete_by_rule($rule_id);
         }
     }
 
     /**
-     * Find posts affected by a rule change.
+     * Enqueue posts that previously had this rule applied.
      *
-     * For created/updated rules: find posts whose content contains the keyword.
-     * For deleted/toggled rules: find posts that had the rule applied.
+     * These posts need reprocessing to remove/update the old link.
+     * Paginated to handle rules applied in 10,000+ posts.
      *
-     * @return array<int> Post IDs.
+     * @return int Number of posts enqueued.
      */
-    private function find_affected_posts(int $rule_id, string $action): array
+    private function enqueue_previously_linked(int $rule_id): int
     {
         global $wpdb;
 
-        $post_ids = [];
+        $table    = $wpdb->prefix . 'lw_applied_links';
+        $offset   = 0;
+        $enqueued = 0;
 
-        // For updates and deletes, always include posts that previously had
-        // this rule applied (they need to be reprocessed without the old link).
-        if (in_array($action, ['updated', 'deleted', 'toggled'], true)) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $previously_linked = $wpdb->get_col(
+        do {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+            $batch = $wpdb->get_col(
                 $wpdb->prepare(
-                    "SELECT DISTINCT post_id FROM {$wpdb->prefix}lw_applied_links WHERE rule_id = %d",
-                    $rule_id
+                    "SELECT DISTINCT post_id FROM {$table} WHERE rule_id = %d LIMIT %d OFFSET %d",
+                    $rule_id,
+                    self::ENQUEUE_BATCH,
+                    $offset
                 )
             );
 
-            $post_ids = array_map('intval', $previously_linked);
-        }
-
-        // For created/updated/toggled rules, find posts containing the keyword.
-        if (in_array($action, ['created', 'updated', 'toggled'], true)) {
-            $rule = $this->rules_repo->find($rule_id);
-
-            if ($rule && !empty($rule->keyword)) {
-                $supported_types = (array) get_option('leanautolinks_supported_post_types', ['post', 'page']);
-                $placeholders    = implode(',', array_fill(0, count($supported_types), '%s'));
-
-                $keyword_escaped = '%' . $wpdb->esc_like($rule->keyword) . '%';
-
-                // Batched query to avoid memory issues with very large result sets.
-                $params = array_merge(
-                    [$keyword_escaped],
-                    $supported_types,
-                    [self::BATCH_SIZE]
-                );
-
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
-                $matching = $wpdb->get_col(
-                    $wpdb->prepare(
-                        "SELECT ID FROM {$wpdb->posts}
-                         WHERE post_content LIKE %s
-                         AND post_status = 'publish'
-                         AND post_type IN ({$placeholders})
-                         LIMIT %d",
-                        ...$params
-                    )
-                );
-
-                $post_ids = array_unique(array_merge($post_ids, array_map('intval', $matching)));
+            foreach ($batch as $post_id) {
+                $this->queue_repo->enqueue((int) $post_id, 'rule_change', self::PRIORITY_RULE_CHANGE);
+                wp_cache_delete("lw_processed:{$post_id}", 'leanautolinks');
+                wp_cache_delete("lw_meta:{$post_id}", 'leanautolinks');
+                $enqueued++;
             }
+
+            $offset += self::ENQUEUE_BATCH;
+        } while (count($batch) === self::ENQUEUE_BATCH);
+
+        return $enqueued;
+    }
+
+    /**
+     * Enqueue posts whose content contains the rule's keyword.
+     *
+     * These posts might gain a new link (or need the link updated).
+     * Paginated to handle keywords appearing in 10,000+ posts.
+     *
+     * @return int Number of posts enqueued.
+     */
+    private function enqueue_keyword_matches(int $rule_id): int
+    {
+        global $wpdb;
+
+        $rule = $this->rules_repo->find($rule_id);
+        if (!$rule || empty($rule->keyword)) {
+            return 0;
         }
 
-        return $post_ids;
+        $supported_types = (array) get_option('leanautolinks_supported_post_types', ['post', 'page']);
+        $placeholders    = implode(',', array_fill(0, count($supported_types), '%s'));
+        $keyword_escaped = '%' . $wpdb->esc_like($rule->keyword) . '%';
+
+        $offset   = 0;
+        $enqueued = 0;
+
+        do {
+            $params = array_merge(
+                [$keyword_escaped],
+                $supported_types,
+                [self::ENQUEUE_BATCH, $offset]
+            );
+
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Safe: dynamic IN() placeholders, table from $wpdb->posts.
+            $batch = $wpdb->get_col(
+                $wpdb->prepare(
+                    "SELECT ID FROM {$wpdb->posts}
+                     WHERE post_content LIKE %s
+                     AND post_status = 'publish'
+                     AND post_type IN ({$placeholders})
+                     LIMIT %d OFFSET %d",
+                    ...$params
+                )
+            );
+
+            foreach ($batch as $post_id) {
+                $this->queue_repo->enqueue((int) $post_id, 'rule_change', self::PRIORITY_RULE_CHANGE);
+                wp_cache_delete("lw_processed:{$post_id}", 'leanautolinks');
+                wp_cache_delete("lw_meta:{$post_id}", 'leanautolinks');
+                $enqueued++;
+            }
+
+            $offset += self::ENQUEUE_BATCH;
+        } while (count($batch) === self::ENQUEUE_BATCH);
+
+        return $enqueued;
     }
 }

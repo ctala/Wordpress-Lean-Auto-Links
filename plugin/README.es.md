@@ -2,7 +2,7 @@
 
 > Plugin de WordPress lean y API-first para automatizar enlaces internos en sitios de alto volumen.
 
-![WordPress Plugin Version](https://img.shields.io/badge/WordPress-Plugin_v0.4.0-blue?logo=wordpress)
+![WordPress Plugin Version](https://img.shields.io/badge/WordPress-Plugin_v0.4.1-blue?logo=wordpress)
 ![PHP 8.1+](https://img.shields.io/badge/PHP-8.1%2B-777BB4?logo=php&logoColor=white)
 ![License: GPLv2](https://img.shields.io/badge/License-GPLv2-green.svg)
 

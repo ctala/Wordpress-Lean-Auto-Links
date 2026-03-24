@@ -5,6 +5,16 @@ All notable changes to the LeanAutoLinks plugin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-03-24
+
+### Fixed
+
+- **Rule change enqueues all affected posts** -- `RuleChangeHandler` had a `LIMIT 1000` that silently truncated enqueuing when a keyword appeared in more than 1,000 posts. Keywords like "startups" (9,570 posts) would only reprocess 1,000. Now paginated in batches of 500 with no upper limit.
+
+### Added
+
+- **Reprocessing rules documented** -- AGENTS.md now includes a complete table of what gets reprocessed for each event (create, update, delete, toggle, save_post, bulk).
+
 ## [0.4.0] - 2026-03-24
 
 ### Added
@@ -117,6 +127,7 @@ Benchmarked against a production-scale dataset from ecosistemastartup.com:
 | Frontend queries added | 0 | 0 |
 | Memory per job | < 32 MB | Within budget |
 
+[0.4.1]: https://github.com/ctala/Lean-Auto-Links/releases/tag/v0.4.1
 [0.4.0]: https://github.com/ctala/Lean-Auto-Links/releases/tag/v0.4.0
 [0.3.2]: https://github.com/ctala/Lean-Auto-Links/releases/tag/v0.3.2
 [0.3.1]: https://github.com/ctala/Lean-Auto-Links/releases/tag/v0.3.1
