@@ -122,7 +122,7 @@ final class AdminPage
             wp_send_json_error(__('Permission denied.', 'leanautolinks'), 403);
         }
 
-        $action_type = sanitize_text_field($_POST['action_type'] ?? '');
+        $action_type = isset($_POST['action_type']) ? sanitize_text_field(wp_unslash($_POST['action_type'])) : '';
 
         switch ($action_type) {
             case 'save_settings':
@@ -163,7 +163,7 @@ final class AdminPage
             wp_die(esc_html__('You do not have sufficient permissions to access this page.', 'leanautolinks'));
         }
 
-        $current_tab = sanitize_text_field($_GET['tab'] ?? 'dashboard');
+        $current_tab = isset($_GET['tab']) ? sanitize_text_field(wp_unslash($_GET['tab'])) : 'dashboard';
         $tabs = [
             'dashboard'  => __('Dashboard', 'leanautolinks'),
             'rules'      => __('Rules', 'leanautolinks'),
@@ -460,7 +460,7 @@ final class AdminPage
         global $wpdb;
 
         // Detail view: show posts linked by a specific rule.
-        $view_rule_id = (int) ($_GET['view_rule'] ?? 0);
+        $view_rule_id = isset($_GET['view_rule']) ? (int) $_GET['view_rule'] : 0;
         if ($view_rule_id > 0) {
             $this->render_rule_linked_posts($view_rule_id);
             return;
@@ -469,9 +469,9 @@ final class AdminPage
         $table = $wpdb->prefix . 'lw_rules';
 
         // Filters.
-        $filter_type   = sanitize_text_field($_GET['rule_type'] ?? '');
-        $filter_active = $_GET['is_active'] ?? '';
-        $search        = sanitize_text_field($_GET['s'] ?? '');
+        $filter_type   = isset($_GET['rule_type']) ? sanitize_text_field(wp_unslash($_GET['rule_type'])) : '';
+        $filter_active = isset($_GET['is_active']) ? sanitize_text_field(wp_unslash($_GET['is_active'])) : '';
+        $search        = isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
 
         $where  = '1=1';
         $params = [];
@@ -498,7 +498,7 @@ final class AdminPage
             : (int) $wpdb->get_var($wpdb->prepare($count_sql, ...$params));
 
         $per_page    = 50;
-        $current_page = max(1, (int) ($_GET['paged'] ?? 1));
+        $current_page = isset($_GET['paged']) ? max(1, (int) $_GET['paged']) : 1;
         $total_pages = max(1, (int) ceil($total_rules_count / $per_page));
         $offset      = ($current_page - 1) * $per_page;
 
@@ -897,7 +897,7 @@ final class AdminPage
 
         // Pagination.
         $per_page     = 50;
-        $current_page = max(1, (int) ($_GET['paged'] ?? 1));
+        $current_page = isset($_GET['paged']) ? max(1, (int) $_GET['paged']) : 1;
         $total_count  = (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(DISTINCT post_id) FROM {$applied_table} WHERE rule_id = %d",
             $rule_id
@@ -1025,8 +1025,8 @@ final class AdminPage
         $queue_stats = $this->queue_repo->get_stats();
         $table       = $wpdb->prefix . 'lw_queue';
 
-        $filter_status = sanitize_text_field($_GET['status'] ?? '');
-        $search        = sanitize_text_field($_GET['s'] ?? '');
+        $filter_status = isset($_GET['status']) ? sanitize_text_field(wp_unslash($_GET['status'])) : '';
+        $search        = isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
 
         $where  = '1=1';
         $params = [];
@@ -1048,7 +1048,7 @@ final class AdminPage
             : (int) $wpdb->get_var($wpdb->prepare($count_sql, ...$params));
 
         $queue_per_page    = 50;
-        $queue_current_page = max(1, (int) ($_GET['paged'] ?? 1));
+        $queue_current_page = isset($_GET['paged']) ? max(1, (int) $_GET['paged']) : 1;
         $queue_total_pages = max(1, (int) ceil($total_queue_items / $queue_per_page));
         $queue_offset      = ($queue_current_page - 1) * $queue_per_page;
 
@@ -1130,14 +1130,14 @@ final class AdminPage
                 if ($remaining_posts > 0) :
                     $last_processed_at = (int) get_option('leanautolinks_last_processed_at', 0);
                     $seconds_since_last = time() - $last_processed_at;
-                    $is_idle = $last_processed_at === 0 || $seconds_since_last > 300; // 5 minutes
+                    // Active = batch ran within last 2 minutes (2x the 60s recurring interval).
+                    $is_active = $last_processed_at > 0 && $seconds_since_last < 120;
 
-                    if ($is_idle) :
+                    if (!$is_active) :
                         ?>
                         &mdash; <span class="lw-eta lw-queue-idle"><?php echo esc_html__('Queue idle — waiting for cron trigger', 'leanautolinks'); ?></span>
                     <?php else :
                         $perf_table = $wpdb->prefix . 'lw_performance_log';
-                        // Try last hour first, then all-time, then use a conservative default.
                         $avg_ms = (float) $wpdb->get_var(
                             "SELECT AVG(duration_ms) FROM {$perf_table} WHERE event_type = 'process_single' AND logged_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR)"
                         );
@@ -1147,16 +1147,16 @@ final class AdminPage
                             );
                         }
                         if ($avg_ms <= 0) {
-                            $avg_ms = 100.0; // Conservative default: 100ms per post.
+                            $avg_ms = 100.0;
                         }
                         $batch_size = (int) get_option('leanautolinks_batch_size', 25);
                         $concurrent = (int) get_option('leanautolinks_max_concurrent_jobs', 3);
                         $batches_left = ceil($remaining_posts / $batch_size);
-                        $seconds_per_batch = ($batch_size * $avg_ms / 1000) + 60; // 60s recurring interval
+                        $seconds_per_batch = ($batch_size * $avg_ms / 1000) + 60;
                         $eta_seconds = (int) ($batches_left * $seconds_per_batch / max($concurrent, 1));
 
                         if ($eta_seconds < 60) :
-                            $eta_text = sprintf(__('< 1 minute remaining', 'leanautolinks'));
+                            $eta_text = __('< 1 minute remaining', 'leanautolinks');
                         elseif ($eta_seconds < 3600) :
                             $eta_text = sprintf(
                                 /* translators: %d: minutes remaining */
@@ -1174,6 +1174,15 @@ final class AdminPage
                             );
                         endif;
                         ?>
+                        &mdash; <span class="lw-processing-pulse"><?php
+                            /* translators: %s: time ago like "30s" or "1m" */
+                            echo esc_html(sprintf(
+                                __('Last batch %s ago', 'leanautolinks'),
+                                $seconds_since_last < 60
+                                    ? $seconds_since_last . 's'
+                                    : (int) ceil($seconds_since_last / 60) . 'm'
+                            ));
+                        ?></span>
                         &mdash; <span class="lw-eta"><?php echo esc_html($eta_text); ?></span>
                     <?php endif; ?>
                 <?php endif; ?>
@@ -1345,7 +1354,7 @@ final class AdminPage
         global $wpdb;
 
         $excl_table = $wpdb->prefix . 'lw_exclusions';
-        $excl_search = sanitize_text_field($_GET['s'] ?? '');
+        $excl_search = isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
 
         $excl_where  = '1=1';
         $excl_params = [];
@@ -1363,7 +1372,7 @@ final class AdminPage
             : (int) $wpdb->get_var($wpdb->prepare($count_sql, ...$excl_params));
 
         $excl_per_page    = 50;
-        $excl_current_page = max(1, (int) ($_GET['paged'] ?? 1));
+        $excl_current_page = isset($_GET['paged']) ? max(1, (int) $_GET['paged']) : 1;
         $excl_total_pages = max(1, (int) ceil($total_exclusions / $excl_per_page));
         $excl_offset      = ($excl_current_page - 1) * $excl_per_page;
 
@@ -1683,13 +1692,13 @@ final class AdminPage
 
         foreach ($settings_map as $form_key => $option_key) {
             if (isset($_POST[$form_key])) {
-                update_option($option_key, (int) $_POST[$form_key]);
+                update_option($option_key, (int) wp_unslash($_POST[$form_key]));
             }
         }
 
         // Post types as array.
         $post_types = isset($_POST['supported_post_types']) && is_array($_POST['supported_post_types'])
-            ? array_map('sanitize_text_field', $_POST['supported_post_types'])
+            ? array_map('sanitize_text_field', wp_unslash($_POST['supported_post_types']))
             : ['post'];
 
         update_option('leanautolinks_supported_post_types', $post_types);
@@ -1699,8 +1708,8 @@ final class AdminPage
 
     private function ajax_create_rule(): void
     {
-        $keyword    = sanitize_text_field($_POST['keyword'] ?? '');
-        $target_url = esc_url_raw($_POST['target_url'] ?? '');
+        $keyword    = isset($_POST['keyword']) ? sanitize_text_field(wp_unslash($_POST['keyword'])) : '';
+        $target_url = isset($_POST['target_url']) ? esc_url_raw(wp_unslash($_POST['target_url'])) : '';
 
         if (empty($keyword) || empty($target_url)) {
             wp_send_json_error(__('Keyword and Target URL are required.', 'leanautolinks'));
@@ -1709,14 +1718,14 @@ final class AdminPage
         $data = [
             'keyword'        => $keyword,
             'target_url'     => $target_url,
-            'rule_type'      => sanitize_text_field($_POST['rule_type'] ?? 'internal'),
-            'entity_type'    => !empty($_POST['entity_type']) ? sanitize_text_field($_POST['entity_type']) : null,
-            'priority'       => (int) ($_POST['priority'] ?? 10),
-            'max_per_post'   => (int) ($_POST['max_per_post'] ?? 1),
-            'case_sensitive' => (int) ($_POST['case_sensitive'] ?? 0),
+            'rule_type'      => isset($_POST['rule_type']) ? sanitize_text_field(wp_unslash($_POST['rule_type'])) : 'internal',
+            'entity_type'    => !empty($_POST['entity_type']) ? sanitize_text_field(wp_unslash($_POST['entity_type'])) : null,
+            'priority'       => isset($_POST['priority']) ? (int) wp_unslash($_POST['priority']) : 10,
+            'max_per_post'   => isset($_POST['max_per_post']) ? (int) wp_unslash($_POST['max_per_post']) : 1,
+            'case_sensitive' => isset($_POST['case_sensitive']) ? (int) wp_unslash($_POST['case_sensitive']) : 0,
             'is_active'      => 1,
-            'nofollow'       => (int) ($_POST['nofollow'] ?? 0),
-            'sponsored'      => (int) ($_POST['sponsored'] ?? 0),
+            'nofollow'       => isset($_POST['nofollow']) ? (int) wp_unslash($_POST['nofollow']) : 0,
+            'sponsored'      => isset($_POST['sponsored']) ? (int) wp_unslash($_POST['sponsored']) : 0,
         ];
 
         $id = $this->rules_repo->create($data);
@@ -1736,14 +1745,14 @@ final class AdminPage
 
     private function ajax_update_rule(): void
     {
-        $id = (int) ($_POST['rule_id'] ?? 0);
+        $id = isset($_POST['rule_id']) ? (int) wp_unslash($_POST['rule_id']) : 0;
 
         if ($id <= 0) {
             wp_send_json_error(__('Invalid rule ID.', 'leanautolinks'));
         }
 
-        $keyword    = sanitize_text_field($_POST['keyword'] ?? '');
-        $target_url = esc_url_raw($_POST['target_url'] ?? '');
+        $keyword    = isset($_POST['keyword']) ? sanitize_text_field(wp_unslash($_POST['keyword'])) : '';
+        $target_url = isset($_POST['target_url']) ? esc_url_raw(wp_unslash($_POST['target_url'])) : '';
 
         if (empty($keyword) || empty($target_url)) {
             wp_send_json_error(__('Keyword and Target URL are required.', 'leanautolinks'));
@@ -1752,13 +1761,13 @@ final class AdminPage
         $data = [
             'keyword'        => $keyword,
             'target_url'     => $target_url,
-            'rule_type'      => sanitize_text_field($_POST['rule_type'] ?? 'internal'),
-            'entity_type'    => !empty($_POST['entity_type']) ? sanitize_text_field($_POST['entity_type']) : null,
-            'priority'       => (int) ($_POST['priority'] ?? 10),
-            'max_per_post'   => (int) ($_POST['max_per_post'] ?? 1),
-            'case_sensitive' => (int) ($_POST['case_sensitive'] ?? 0),
-            'nofollow'       => (int) ($_POST['nofollow'] ?? 0),
-            'sponsored'      => (int) ($_POST['sponsored'] ?? 0),
+            'rule_type'      => isset($_POST['rule_type']) ? sanitize_text_field(wp_unslash($_POST['rule_type'])) : 'internal',
+            'entity_type'    => !empty($_POST['entity_type']) ? sanitize_text_field(wp_unslash($_POST['entity_type'])) : null,
+            'priority'       => isset($_POST['priority']) ? (int) wp_unslash($_POST['priority']) : 10,
+            'max_per_post'   => isset($_POST['max_per_post']) ? (int) wp_unslash($_POST['max_per_post']) : 1,
+            'case_sensitive' => isset($_POST['case_sensitive']) ? (int) wp_unslash($_POST['case_sensitive']) : 0,
+            'nofollow'       => isset($_POST['nofollow']) ? (int) wp_unslash($_POST['nofollow']) : 0,
+            'sponsored'      => isset($_POST['sponsored']) ? (int) wp_unslash($_POST['sponsored']) : 0,
         ];
 
         $updated = $this->rules_repo->update($id, $data);
@@ -1778,7 +1787,7 @@ final class AdminPage
 
     private function ajax_delete_rule(): void
     {
-        $id = (int) ($_POST['rule_id'] ?? 0);
+        $id = isset($_POST['rule_id']) ? (int) wp_unslash($_POST['rule_id']) : 0;
 
         if ($id <= 0) {
             wp_send_json_error(__('Invalid rule ID.', 'leanautolinks'));
@@ -1793,7 +1802,7 @@ final class AdminPage
 
     private function ajax_toggle_rule(): void
     {
-        $id = (int) ($_POST['rule_id'] ?? 0);
+        $id = isset($_POST['rule_id']) ? (int) wp_unslash($_POST['rule_id']) : 0;
 
         if ($id <= 0) {
             wp_send_json_error(__('Invalid rule ID.', 'leanautolinks'));
@@ -1814,8 +1823,8 @@ final class AdminPage
 
     private function ajax_create_exclusion(): void
     {
-        $type  = sanitize_text_field($_POST['excl_type'] ?? '');
-        $value = sanitize_text_field($_POST['excl_value'] ?? '');
+        $type  = isset($_POST['excl_type']) ? sanitize_text_field(wp_unslash($_POST['excl_type'])) : '';
+        $value = isset($_POST['excl_value']) ? sanitize_text_field(wp_unslash($_POST['excl_value'])) : '';
 
         $valid_types = ['post', 'url', 'keyword', 'post_type'];
 
@@ -1836,7 +1845,7 @@ final class AdminPage
 
     private function ajax_delete_exclusion(): void
     {
-        $id = (int) ($_POST['exclusion_id'] ?? 0);
+        $id = isset($_POST['exclusion_id']) ? (int) wp_unslash($_POST['exclusion_id']) : 0;
 
         if ($id <= 0) {
             wp_send_json_error(__('Invalid exclusion ID.', 'leanautolinks'));
@@ -1853,7 +1862,7 @@ final class AdminPage
 
     private function ajax_bulk_action(): void
     {
-        $action = sanitize_text_field($_POST['bulk_type'] ?? '');
+        $action = isset($_POST['bulk_type']) ? sanitize_text_field(wp_unslash($_POST['bulk_type'])) : '';
 
         switch ($action) {
             case 'bulk_reprocess':
@@ -1960,7 +1969,7 @@ final class AdminPage
     private function ajax_bulk_delete_rules(): void
     {
         $ids = isset($_POST['rule_ids']) && is_array($_POST['rule_ids'])
-            ? array_map('intval', $_POST['rule_ids'])
+            ? array_map('intval', wp_unslash($_POST['rule_ids']))
             : [];
 
         if (empty($ids)) {
@@ -1983,7 +1992,7 @@ final class AdminPage
     private function ajax_bulk_update_rules(int $is_active): void
     {
         $ids = isset($_POST['rule_ids']) && is_array($_POST['rule_ids'])
-            ? array_map('intval', $_POST['rule_ids'])
+            ? array_map('intval', wp_unslash($_POST['rule_ids']))
             : [];
 
         if (empty($ids)) {

@@ -16,7 +16,7 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 global $wpdb;
 
 // 1. Drop all custom tables.
-$tables = [
+$leanautolinks_tables = [
     $wpdb->prefix . 'lw_rules',
     $wpdb->prefix . 'lw_applied_links',
     $wpdb->prefix . 'lw_queue',
@@ -24,30 +24,30 @@ $tables = [
     $wpdb->prefix . 'lw_performance_log',
 ];
 
-foreach ($tables as $table) {
-    $wpdb->query("DROP TABLE IF EXISTS {$table}"); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+foreach ($leanautolinks_tables as $leanautolinks_table) {
+    $wpdb->query("DROP TABLE IF EXISTS {$leanautolinks_table}"); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 }
 
 // 2. Delete all options prefixed with leanautolinks_.
-$options = $wpdb->get_col(
+$leanautolinks_options = $wpdb->get_col(
     "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE 'leanautolinks\_%'"
 );
 
-foreach ($options as $option) {
-    delete_option($option);
+foreach ($leanautolinks_options as $leanautolinks_option) {
+    delete_option($leanautolinks_option);
 }
 
 // 3. Clear scheduled Action Scheduler actions.
 if (function_exists('as_unschedule_all_actions')) {
-    $actions = [
+    $leanautolinks_actions = [
         'leanautolinks_process_single',
         'leanautolinks_process_batch',
         'leanautolinks_warm_cache',
         'leanautolinks_recache_post',
     ];
 
-    foreach ($actions as $action) {
-        as_unschedule_all_actions($action, [], 'leanautolinks');
+    foreach ($leanautolinks_actions as $leanautolinks_action) {
+        as_unschedule_all_actions($leanautolinks_action, [], 'leanautolinks');
     }
 }
 
@@ -56,7 +56,7 @@ if (function_exists('wp_cache_flush_group')) {
     wp_cache_flush_group('leanautolinks');
 } else {
     // Manually delete known cache keys when group flush is unavailable.
-    $cache_keys = [
+    $leanautolinks_cache_keys = [
         'lw_rules_active',
         'lw_rules:internal',
         'lw_rules:affiliate',
@@ -68,7 +68,7 @@ if (function_exists('wp_cache_flush_group')) {
         'lw_stats:misses',
     ];
 
-    foreach ($cache_keys as $key) {
-        wp_cache_delete($key, 'leanautolinks');
+    foreach ($leanautolinks_cache_keys as $leanautolinks_key) {
+        wp_cache_delete($leanautolinks_key, 'leanautolinks');
     }
 }

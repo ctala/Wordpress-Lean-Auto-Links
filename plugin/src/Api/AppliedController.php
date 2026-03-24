@@ -77,6 +77,7 @@ final class AppliedController extends RestController
 
         // Count total.
         $count_sql = "SELECT COUNT(*) FROM {$table} WHERE {$where}";
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $total     = empty($params)
             ? (int) $wpdb->get_var($count_sql)
             : (int) $wpdb->get_var($wpdb->prepare($count_sql, ...$params));
@@ -87,6 +88,7 @@ final class AppliedController extends RestController
         $query_params[] = $pagination['offset'];
 
         $sql     = "SELECT * FROM {$table} WHERE {$where} ORDER BY applied_at DESC LIMIT %d OFFSET %d";
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $results = $wpdb->get_results($wpdb->prepare($sql, ...$query_params));
 
         $response = new \WP_REST_Response($results ?: [], 200);
@@ -108,6 +110,7 @@ final class AppliedController extends RestController
         $basic = $this->repo->get_stats();
 
         // Per rule_type breakdown.
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $by_type = $wpdb->get_results(
             "SELECT r.rule_type, COUNT(al.id) as count
              FROM {$table} al
@@ -123,6 +126,7 @@ final class AppliedController extends RestController
         }
 
         // Top linked posts (most links applied).
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $top_posts = $wpdb->get_results(
             "SELECT al.post_id, p.post_title, COUNT(al.id) as link_count
              FROM {$table} al
@@ -134,6 +138,7 @@ final class AppliedController extends RestController
         );
 
         // Top rules (most applied).
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $top_rules = $wpdb->get_results(
             "SELECT al.rule_id, r.keyword, r.target_url, COUNT(al.id) as usage_count
              FROM {$table} al
@@ -145,6 +150,7 @@ final class AppliedController extends RestController
         );
 
         // Links applied today.
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $today = $wpdb->get_var(
             $wpdb->prepare(
                 "SELECT COUNT(*) FROM {$table} WHERE rule_id != 0 AND DATE(applied_at) = %s",

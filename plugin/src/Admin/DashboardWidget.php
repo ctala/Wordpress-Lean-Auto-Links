@@ -52,6 +52,7 @@ final class DashboardWidget
         $perf_table     = $wpdb->prefix . 'lw_performance_log';
 
         // --- Rules summary ---
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $rules_data = $wpdb->get_row(
             "SELECT
                 COUNT(*) AS total,
@@ -69,11 +70,13 @@ final class DashboardWidget
         $affiliate_rules = (int) ($rules_data->type_affiliate ?? 0);
 
         // --- Applied links ---
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $total_applied = (int) $wpdb->get_var(
             "SELECT COUNT(*) FROM {$applied_table}"
         );
 
         $today = current_time('Y-m-d');
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $applied_today = (int) $wpdb->get_var(
             $wpdb->prepare(
                 "SELECT COUNT(*) FROM {$applied_table} WHERE DATE(applied_at) = %s",
@@ -82,6 +85,7 @@ final class DashboardWidget
         );
 
         // --- Queue status ---
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $queue_data = $wpdb->get_results(
             "SELECT status, COUNT(*) AS cnt FROM {$queue_table} GROUP BY status",
             OBJECT_K
@@ -92,6 +96,7 @@ final class DashboardWidget
         $failed     = (int) ($queue_data['failed']->cnt ?? 0);
 
         // --- Performance (avg processing time last 24h) ---
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $avg_duration = $wpdb->get_var(
             "SELECT ROUND(AVG(duration_ms))
             FROM {$perf_table}

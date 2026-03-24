@@ -37,6 +37,7 @@ final class PerformanceRepository
     ): void {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
         $wpdb->insert(
             $this->table,
             [
@@ -67,6 +68,7 @@ final class PerformanceRepository
             default => 'INTERVAL 24 HOUR',
         };
 
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $row = $wpdb->get_row(
             "SELECT
                 COUNT(*) as total_events,
@@ -127,6 +129,7 @@ final class PerformanceRepository
         $params[] = $limit;
         $params[] = $offset;
 
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $results = $wpdb->get_results(
             $wpdb->prepare($sql, ...$params)
         );
@@ -144,6 +147,7 @@ final class PerformanceRepository
     {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $rows = $wpdb->query(
             $wpdb->prepare(
                 "DELETE FROM {$this->table} WHERE logged_at < DATE_SUB(NOW(), INTERVAL %d DAY)",
