@@ -1107,6 +1107,44 @@ final class AdminPage
                         $queue_stats['processing']
                     )); ?></span>
                 <?php endif; ?>
+                <?php
+                // Calculate ETA based on recent processing speed.
+                $remaining_posts = $queue_stats['pending'] + $queue_stats['processing'];
+                if ($remaining_posts > 0) :
+                    $perf_table = $wpdb->prefix . 'lw_performance_log';
+                    $avg_ms = (float) $wpdb->get_var(
+                        "SELECT AVG(duration_ms) FROM {$perf_table} WHERE event_type = 'process_single' AND logged_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR)"
+                    );
+                    if ($avg_ms > 0) :
+                        $batch_size = (int) get_option('leanautolinks_batch_size', 25);
+                        $concurrent = (int) get_option('leanautolinks_max_concurrent_jobs', 3);
+                        // Estimate: (remaining / batch_size) batches, each taking (batch_size * avg_ms) + 5s scheduling delay
+                        $batches_left = ceil($remaining_posts / $batch_size);
+                        $seconds_per_batch = ($batch_size * $avg_ms / 1000) + 5;
+                        $eta_seconds = (int) ($batches_left * $seconds_per_batch / max($concurrent, 1));
+
+                        if ($eta_seconds < 60) :
+                            $eta_text = sprintf(__('< 1 minute remaining', 'leanautolinks'));
+                        elseif ($eta_seconds < 3600) :
+                            $eta_text = sprintf(
+                                /* translators: %d: minutes remaining */
+                                __('~%d minutes remaining', 'leanautolinks'),
+                                (int) ceil($eta_seconds / 60)
+                            );
+                        else :
+                            $hours = floor($eta_seconds / 3600);
+                            $mins = (int) ceil(($eta_seconds % 3600) / 60);
+                            $eta_text = sprintf(
+                                /* translators: 1: hours 2: minutes remaining */
+                                __('~%1$dh %2$dm remaining', 'leanautolinks'),
+                                $hours,
+                                $mins
+                            );
+                        endif;
+                        ?>
+                        &mdash; <span class="lw-eta"><?php echo esc_html($eta_text); ?></span>
+                    <?php endif; ?>
+                <?php endif; ?>
             </p>
         <?php endif; ?>
 

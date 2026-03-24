@@ -93,7 +93,8 @@ final class LinkProcessorJob
      */
     public function process_batch(array $args): void
     {
-        $limit = isset($args['limit']) ? min((int) $args['limit'], 100) : 100;
+        $batch_size = (int) get_option('leanautolinks_batch_size', 25);
+        $limit = isset($args['limit']) ? min((int) $args['limit'], $batch_size) : $batch_size;
         $pending = $this->queue_repo->get_pending($limit);
 
         if (empty($pending)) {
@@ -101,25 +102,32 @@ final class LinkProcessorJob
         }
 
         $processed_count = 0;
+        $memory_aborted = false;
 
         foreach ($pending as $queue_item) {
             // Memory safety check before each post.
             if (memory_get_usage(true) > self::MEMORY_THRESHOLD) {
-                // Schedule a continuation batch for remaining posts.
-                if (function_exists('as_schedule_single_action')) {
-                    as_schedule_single_action(
-                        time() + 30,
-                        'leanautolinks_process_batch',
-                        [array_merge($args, ['limit' => $limit - $processed_count])],
-                        'leanautolinks'
-                    );
-                }
+                $memory_aborted = true;
                 break;
             }
 
             $post_id = (int) $queue_item->post_id;
             $this->process_single($post_id);
             $processed_count++;
+        }
+
+        // Always schedule a continuation if there are more pending posts.
+        if (function_exists('as_schedule_single_action')) {
+            $remaining = $this->queue_repo->get_stats();
+            if (($remaining['pending'] ?? 0) > 0) {
+                $delay = $memory_aborted ? 30 : 5;
+                as_schedule_single_action(
+                    time() + $delay,
+                    'leanautolinks_process_batch',
+                    [$args],
+                    'leanautolinks'
+                );
+            }
         }
     }
 
