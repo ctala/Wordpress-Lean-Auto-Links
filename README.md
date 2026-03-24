@@ -6,6 +6,8 @@
 ![PHP 8.1+](https://img.shields.io/badge/PHP-8.1%2B-777BB4?logo=php&logoColor=white)
 ![License: GPLv2](https://img.shields.io/badge/License-GPLv2-green.svg)
 
+English | **[Espanol](README.es.md)**
+
 ## Why This Exists
 
 Internal linking at scale is a manual nightmare. Sites with 15,000+ posts and hundreds of linking rules cannot rely on plugins that scan content on every page load or block the editor during saves. Existing solutions (Link Whisper, Internal Link Juicer, Rank Math) degrade performance as rule counts grow, and none of them expose a proper API for automation.
@@ -306,6 +308,10 @@ Contributions are welcome. Before submitting a pull request:
 5. Add a changelog entry under `[Unreleased]` in `CHANGELOG.md`.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
+
+## Sponsorship
+
+If you find this plugin useful, consider sponsoring its development through [GitHub Sponsors](https://github.com/sponsors/ctala). Your support helps us keep the plugin updated, add new features, and provide support.
 
 ## License
 

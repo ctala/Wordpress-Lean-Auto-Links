@@ -8,6 +8,7 @@ if (!defined('ABSPATH')) {
 }
 
 use LeanAutoLinks\Admin\AdminPage;
+use LeanAutoLinks\Admin\DashboardWidget;
 use LeanAutoLinks\Admin\KeywordMetaBox;
 use LeanAutoLinks\Api\AppliedController;
 use LeanAutoLinks\Api\ExclusionsController;
@@ -160,6 +161,9 @@ final class Plugin
 
             $meta_box = new KeywordMetaBox($this->rules_repo, $this->applied_repo);
             $meta_box->register();
+
+            $dashboard = new DashboardWidget();
+            $dashboard->register();
         }
 
         // Register WP-CLI commands.

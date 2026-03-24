@@ -34,16 +34,20 @@ final class KeywordMetaBox
     {
         add_action('add_meta_boxes', [$this, 'add_meta_box']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_assets']);
+        add_action('enqueue_block_editor_assets', [$this, 'enqueue_gutenberg_assets']);
         add_action('wp_ajax_leanautolinks_metabox_add_rule', [$this, 'ajax_add_rule']);
         add_action('wp_ajax_leanautolinks_metabox_remove_rule', [$this, 'ajax_remove_rule']);
+        add_action('wp_ajax_leanautolinks_gutenberg_get_data', [$this, 'ajax_gutenberg_get_data']);
     }
 
     /**
-     * Register the meta box for all supported post types.
+     * Register the meta box for all public post types by default,
+     * unless restricted via leanautolinks_supported_post_types option.
      */
     public function add_meta_box(): void
     {
-        $supported_types = (array) get_option('leanautolinks_supported_post_types', ['post', 'page']);
+        $all_public_types = get_post_types(['public' => true], 'names');
+        $supported_types  = (array) get_option('leanautolinks_supported_post_types', array_values($all_public_types));
 
         foreach ($supported_types as $post_type) {
             add_meta_box(
@@ -187,6 +191,128 @@ final class KeywordMetaBox
             </div>
         </div>
         <?php
+    }
+
+    /**
+     * Enqueue the Gutenberg sidebar panel script on the block editor.
+     */
+    public function enqueue_gutenberg_assets(): void
+    {
+        $post = get_post();
+        if (!$post) {
+            return;
+        }
+
+        $all_public_types = get_post_types(['public' => true], 'names');
+        $supported_types  = (array) get_option('leanautolinks_supported_post_types', array_values($all_public_types));
+
+        if (!in_array($post->post_type, $supported_types, true)) {
+            return;
+        }
+
+        wp_enqueue_script(
+            'leanautolinks-gutenberg-panel',
+            LEANAUTOLINKS_URL . 'src/Admin/assets/gutenberg-panel.js',
+            ['wp-plugins', 'wp-edit-post', 'wp-components', 'wp-element', 'wp-data', 'wp-api-fetch'],
+            LEANAUTOLINKS_VERSION,
+            true
+        );
+
+        wp_localize_script('leanautolinks-gutenberg-panel', 'leanautolinksGutenberg', [
+            'ajaxUrl' => admin_url('admin-ajax.php'),
+            'nonce'   => wp_create_nonce('leanautolinks_metabox'),
+            'postId'  => $post->ID,
+            'strings' => [
+                'pointingHere'       => __('Keywords pointing here', 'leanautolinks'),
+                'appliedKeywords'    => __('Applied Keywords', 'leanautolinks'),
+                'addKeyword'         => __('Add Keyword', 'leanautolinks'),
+                'addDescription'     => __('Other posts containing this keyword will link here.', 'leanautolinks'),
+                'addButton'          => __('Add', 'leanautolinks'),
+                'keywordPlaceholder' => __('Keyword...', 'leanautolinks'),
+                'keywordRequired'    => __('Keyword is required.', 'leanautolinks'),
+                'confirmDelete'      => __('Remove this keyword rule?', 'leanautolinks'),
+                'error'              => __('An error occurred.', 'leanautolinks'),
+                'added'              => __('Rule created. Post will be reprocessed.', 'leanautolinks'),
+                'removed'            => __('Rule removed.', 'leanautolinks'),
+                'removeRule'         => __('Remove rule', 'leanautolinks'),
+                'loading'            => __('Loading...', 'leanautolinks'),
+                'noRulesPointingHere' => __('No keyword rules target this post yet.', 'leanautolinks'),
+                'noApplied'          => __('No keywords linked in this post yet.', 'leanautolinks'),
+            ],
+        ]);
+    }
+
+    /**
+     * AJAX: Fetch data for the Gutenberg sidebar panel.
+     *
+     * Returns both "rules pointing here" and "applied keywords" for a post.
+     */
+    public function ajax_gutenberg_get_data(): void
+    {
+        check_ajax_referer('leanautolinks_metabox', '_nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('Permission denied.', 'leanautolinks'));
+        }
+
+        $post_id = (int) ($_POST['post_id'] ?? 0);
+
+        if ($post_id <= 0) {
+            wp_send_json_error(__('Invalid post.', 'leanautolinks'));
+        }
+
+        global $wpdb;
+
+        $applied_table = $wpdb->prefix . 'lw_applied_links';
+        $rules_table   = $wpdb->prefix . 'lw_rules';
+
+        // Applied keywords: rules that have been linked inside this post's content.
+        $applied_keywords = $wpdb->get_results($wpdb->prepare(
+            "SELECT DISTINCT r.id, r.keyword, r.target_url, r.rule_type, r.is_active,
+                    COUNT(al.id) as link_count
+             FROM {$applied_table} al
+             INNER JOIN {$rules_table} r ON r.id = al.rule_id
+             WHERE al.post_id = %d
+             GROUP BY r.id, r.keyword, r.target_url, r.rule_type, r.is_active
+             ORDER BY r.keyword ASC",
+            $post_id
+        ));
+
+        // Rules pointing here: active rules that target this post's URL.
+        $post_url = get_permalink($post_id);
+        $rules_pointing_here = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, keyword, target_url, rule_type
+             FROM {$rules_table}
+             WHERE is_active = 1 AND target_url = %s
+             ORDER BY keyword ASC",
+            wp_make_link_relative($post_url ?: '')
+        ));
+
+        // Convert numeric ID fields to integers for JS consistency.
+        $applied = array_map(function ($row) {
+            return [
+                'id'         => (int) $row->id,
+                'keyword'    => $row->keyword,
+                'target_url' => $row->target_url,
+                'rule_type'  => $row->rule_type,
+                'is_active'  => (int) $row->is_active,
+                'link_count' => (int) $row->link_count,
+            ];
+        }, $applied_keywords ?: []);
+
+        $pointing = array_map(function ($row) {
+            return [
+                'id'         => (int) $row->id,
+                'keyword'    => $row->keyword,
+                'target_url' => $row->target_url,
+                'rule_type'  => $row->rule_type,
+            ];
+        }, $rules_pointing_here ?: []);
+
+        wp_send_json_success([
+            'applied_keywords'    => $applied,
+            'rules_pointing_here' => $pointing,
+        ]);
     }
 
     /**

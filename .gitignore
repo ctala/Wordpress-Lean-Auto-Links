@@ -1,0 +1,26 @@
+# Dependencies
+/vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+/node_modules/
+/dist/
+
+# Testing
+/coverage/
+.phpunit.result.cache
+.phpunit.cache/
+
+# Environment
+.env
+.env.local
