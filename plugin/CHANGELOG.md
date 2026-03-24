@@ -133,11 +133,11 @@ Benchmarked against a production-scale dataset from ecosistemastartup.com:
 | Frontend queries added | 0 | 0 |
 | Memory per job | < 32 MB | Within budget |
 
-[0.4.2]: https://github.com/ctala/Lean-Auto-Links/releases/tag/v0.4.2
-[0.4.1]: https://github.com/ctala/Lean-Auto-Links/releases/tag/v0.4.1
-[0.4.0]: https://github.com/ctala/Lean-Auto-Links/releases/tag/v0.4.0
-[0.3.2]: https://github.com/ctala/Lean-Auto-Links/releases/tag/v0.3.2
-[0.3.1]: https://github.com/ctala/Lean-Auto-Links/releases/tag/v0.3.1
+[0.4.2]: https://github.com/ctala/Wordpress-Lean-Auto-Links/releases/tag/v0.4.2
+[0.4.1]: https://github.com/ctala/Wordpress-Lean-Auto-Links/releases/tag/v0.4.1
+[0.4.0]: https://github.com/ctala/Wordpress-Lean-Auto-Links/releases/tag/v0.4.0
+[0.3.2]: https://github.com/ctala/Wordpress-Lean-Auto-Links/releases/tag/v0.3.2
+[0.3.1]: https://github.com/ctala/Wordpress-Lean-Auto-Links/releases/tag/v0.3.1
 [0.3.0]: https://github.com/ctala/Wordpress-Lean-Auto-Links/releases/tag/v0.3.0
 [0.2.0]: https://github.com/ctala/Wordpress-Lean-Auto-Links/releases/tag/v0.2.0
 [0.1.0]: https://github.com/ctala/Wordpress-Lean-Auto-Links/releases/tag/v0.1.0
