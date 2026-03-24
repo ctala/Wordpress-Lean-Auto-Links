@@ -288,6 +288,11 @@
     50% { opacity: 0.5; }
 }
 
+.lw-queue-idle {
+    color: #996800;
+    font-style: italic;
+}
+
 /* Legacy Progress Bar */
 .lw-progress-bar-wrapper {
     background: #f0f0f1;
