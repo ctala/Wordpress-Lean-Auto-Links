@@ -1125,28 +1125,34 @@ final class AdminPage
                     )); ?></span>
                 <?php endif; ?>
                 <?php
-                // Calculate ETA based on recent processing speed.
+                // Calculate ETA or show idle status based on recent processing activity.
                 $remaining_posts = $queue_stats['pending'] + $queue_stats['processing'];
                 if ($remaining_posts > 0) :
-                    $perf_table = $wpdb->prefix . 'lw_performance_log';
-                    // Try last hour first, then all-time, then use a conservative default.
-                    $avg_ms = (float) $wpdb->get_var(
-                        "SELECT AVG(duration_ms) FROM {$perf_table} WHERE event_type = 'process_single' AND logged_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR)"
-                    );
-                    if ($avg_ms <= 0) {
+                    $last_processed_at = (int) get_option('leanautolinks_last_processed_at', 0);
+                    $seconds_since_last = time() - $last_processed_at;
+                    $is_idle = $last_processed_at === 0 || $seconds_since_last > 300; // 5 minutes
+
+                    if ($is_idle) :
+                        ?>
+                        &mdash; <span class="lw-eta lw-queue-idle"><?php echo esc_html__('Queue idle — waiting for cron trigger', 'leanautolinks'); ?></span>
+                    <?php else :
+                        $perf_table = $wpdb->prefix . 'lw_performance_log';
+                        // Try last hour first, then all-time, then use a conservative default.
                         $avg_ms = (float) $wpdb->get_var(
-                            "SELECT AVG(duration_ms) FROM {$perf_table} WHERE event_type = 'process_single'"
+                            "SELECT AVG(duration_ms) FROM {$perf_table} WHERE event_type = 'process_single' AND logged_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR)"
                         );
-                    }
-                    if ($avg_ms <= 0) {
-                        $avg_ms = 100.0; // Conservative default: 100ms per post.
-                    }
-                    if (true) :
+                        if ($avg_ms <= 0) {
+                            $avg_ms = (float) $wpdb->get_var(
+                                "SELECT AVG(duration_ms) FROM {$perf_table} WHERE event_type = 'process_single'"
+                            );
+                        }
+                        if ($avg_ms <= 0) {
+                            $avg_ms = 100.0; // Conservative default: 100ms per post.
+                        }
                         $batch_size = (int) get_option('leanautolinks_batch_size', 25);
                         $concurrent = (int) get_option('leanautolinks_max_concurrent_jobs', 3);
-                        // Estimate: (remaining / batch_size) batches, each taking (batch_size * avg_ms) + 5s scheduling delay
                         $batches_left = ceil($remaining_posts / $batch_size);
-                        $seconds_per_batch = ($batch_size * $avg_ms / 1000) + 5;
+                        $seconds_per_batch = ($batch_size * $avg_ms / 1000) + 60; // 60s recurring interval
                         $eta_seconds = (int) ($batches_left * $seconds_per_batch / max($concurrent, 1));
 
                         if ($eta_seconds < 60) :
