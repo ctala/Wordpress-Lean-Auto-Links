@@ -46,8 +46,10 @@ final class ContentFilterHandler
      */
     public static function init(): void
     {
-        self::$has_ext_cache  = (bool) wp_using_ext_object_cache();
-        self::$has_db_fallback = !self::$has_ext_cache;
+        self::$has_ext_cache   = (bool) wp_using_ext_object_cache();
+        // Always enable DB fallback: object cache entries expire (TTL), so
+        // the DB must serve as a reliable secondary layer even with Redis.
+        self::$has_db_fallback = true;
     }
 
     /**

@@ -68,12 +68,28 @@ final class Plugin
      */
     public function init(): void
     {
+        $this->maybe_upgrade();
         $this->init_repositories();
         $this->init_cache();
         $this->init_handlers();
         $this->register_hooks();
         $this->register_action_scheduler_actions();
         $this->register_rest_api();
+    }
+
+    /**
+     * Run upgrade routines when the plugin version changes.
+     *
+     * Calls dbDelta() to add any new columns/tables introduced in newer versions.
+     */
+    private function maybe_upgrade(): void
+    {
+        $stored_version = get_option('leanautolinks_db_version', '0.0.0');
+
+        if (version_compare($stored_version, LEANAUTOLINKS_VERSION, '<')) {
+            $installer = new Installer();
+            $installer->activate();
+        }
     }
 
     /**
