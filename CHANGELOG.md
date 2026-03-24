@@ -5,6 +5,29 @@ All notable changes to the LeanAutoLinks plugin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-03-24
+
+### Added
+
+- **Gutenberg sidebar panel** -- manage keywords directly from the block editor using a native `PluginDocumentSettingPanel`.
+- **Dashboard widget** -- quick overview of rules, applied links, queue status, and performance on the WordPress dashboard.
+- **Meta box on all CPTs** -- keyword meta box now appears on all public post types by default (configurable via settings).
+- **ETA timer** -- estimated time remaining shown on the queue progress bar.
+- **Translation support** -- `.pot` file generated with 1,069 translatable strings.
+- **Spanish README** -- `README.es.md` for Spanish-speaking users.
+- **GitHub Sponsors** -- `FUNDING.yml` configured for project sponsorship.
+- **Migration guide** -- instructions for migrating from Internal Link Juicer and other plugins.
+
+### Changed
+
+- **Queue processing** -- batches now self-chain: after completing a batch, the next one is automatically scheduled (5s delay). Previously, only one batch ran per trigger.
+- **Default batch size** -- reduced from 100 to 25 posts per batch for faster incremental progress.
+- **Meta box simplified** -- removed URL and type fields; always creates internal rules targeting the current post's URL.
+
+### Fixed
+
+- Fixed README links pointing to wrong repository URLs.
+
 ## [0.1.0] - 2026-03-24
 
 ### Added
@@ -38,4 +61,5 @@ Benchmarked against a production-scale dataset from ecosistemastartup.com:
 | Frontend queries added | 0 | 0 |
 | Memory per job | < 32 MB | Within budget |
 
-[0.1.0]: https://github.com/ecosistemastartup/leanautolinks/releases/tag/v0.1.0
+[0.2.0]: https://github.com/ctala/Wordpress-Lean-Auto-Links/releases/tag/v0.2.0
+[0.1.0]: https://github.com/ctala/Wordpress-Lean-Auto-Links/releases/tag/v0.1.0

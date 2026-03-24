@@ -2,7 +2,7 @@
 
 > Lean, API-first automated internal linking for high-volume WordPress sites.
 
-![WordPress Plugin Version](https://img.shields.io/badge/WordPress-Plugin_v0.1.0-blue?logo=wordpress)
+![WordPress Plugin Version](https://img.shields.io/badge/WordPress-Plugin_v0.2.0-blue?logo=wordpress)
 ![PHP 8.1+](https://img.shields.io/badge/PHP-8.1%2B-777BB4?logo=php&logoColor=white)
 ![License: GPLv2](https://img.shields.io/badge/License-GPLv2-green.svg)
 
@@ -33,12 +33,11 @@ LeanAutoLinks was built for a site publishing 100 posts per day with 1,000+ link
 ### Option 1: Docker (recommended for evaluation)
 
 ```bash
-git clone https://github.com/ecosistemastartup/leanautolinks.git
-cd leanautolinks
-docker compose up -d
+git clone https://github.com/ctala/Wordpress-Lean-Auto-Links.git
+cd Wordpress-Lean-Auto-Links
 ```
 
-Open `http://localhost:8080/wp-admin`, activate the LeanAutoLinks plugin, and you are ready.
+Upload the plugin folder to your WordPress installation or use Docker for evaluation.
 
 ### Option 2: Manual installation
 
@@ -53,7 +52,7 @@ Open `http://localhost:8080/wp-admin`, activate the LeanAutoLinks plugin, and yo
 **Via the API:**
 
 ```bash
-curl -X POST http://localhost:8080/wp-json/leanautolinks/v1/rules \
+curl -X POST https://your-site.com/wp-json/leanautolinks/v1/rules \
   -H "Content-Type: application/json" \
   -u "admin:YOUR_APP_PASSWORD" \
   -d '{
@@ -67,7 +66,7 @@ curl -X POST http://localhost:8080/wp-json/leanautolinks/v1/rules \
 New and updated posts are processed automatically in the background. To reprocess existing content in bulk:
 
 ```bash
-curl -X POST http://localhost:8080/wp-json/leanautolinks/v1/queue/bulk \
+curl -X POST https://your-site.com/wp-json/leanautolinks/v1/queue/bulk \
   -H "Content-Type: application/json" \
   -u "admin:YOUR_APP_PASSWORD" \
   -d '{"post_type": "post", "limit": 15000}'
@@ -103,7 +102,7 @@ Full specification: see `openapi.yaml` in the repository root.
 ### Example: Create an affiliate rule
 
 ```bash
-curl -X POST http://localhost:8080/wp-json/leanautolinks/v1/rules \
+curl -X POST https://your-site.com/wp-json/leanautolinks/v1/rules \
   -H "Content-Type: application/json" \
   -u "admin:YOUR_APP_PASSWORD" \
   -d '{
@@ -119,7 +118,7 @@ curl -X POST http://localhost:8080/wp-json/leanautolinks/v1/rules \
 ### Example: Check queue health
 
 ```bash
-curl http://localhost:8080/wp-json/leanautolinks/v1/health \
+curl https://your-site.com/wp-json/leanautolinks/v1/health \
   -u "admin:YOUR_APP_PASSWORD"
 ```
 
@@ -142,7 +141,7 @@ When your content team adds a new glossary term, an agent can automatically crea
 
 ```bash
 # 1. Agent creates a rule for the new glossary term
-curl -X POST http://localhost:8080/wp-json/leanautolinks/v1/rules \
+curl -X POST https://your-site.com/wp-json/leanautolinks/v1/rules \
   -H "Content-Type: application/json" \
   -u "admin:YOUR_APP_PASSWORD" \
   -d '{
@@ -156,13 +155,13 @@ curl -X POST http://localhost:8080/wp-json/leanautolinks/v1/rules \
   }'
 
 # 2. Agent enqueues recent posts for reprocessing
-curl -X POST http://localhost:8080/wp-json/leanautolinks/v1/queue/bulk \
+curl -X POST https://your-site.com/wp-json/leanautolinks/v1/queue/bulk \
   -H "Content-Type: application/json" \
   -u "admin:YOUR_APP_PASSWORD" \
   -d '{"post_type": "post", "date_after": "2026-03-01", "limit": 5000}'
 
 # 3. Agent monitors progress
-curl http://localhost:8080/wp-json/leanautolinks/v1/queue \
+curl https://your-site.com/wp-json/leanautolinks/v1/queue \
   -u "admin:YOUR_APP_PASSWORD"
 ```
 
@@ -172,11 +171,11 @@ An agent that publishes posts programmatically can verify that linking was appli
 
 ```bash
 # Check applied links for a specific post
-curl http://localhost:8080/wp-json/leanautolinks/v1/applied?post_id=12345 \
+curl https://your-site.com/wp-json/leanautolinks/v1/applied?post_id=12345 \
   -u "admin:YOUR_APP_PASSWORD"
 
 # Get aggregate statistics to detect anomalies
-curl http://localhost:8080/wp-json/leanautolinks/v1/applied/stats \
+curl https://your-site.com/wp-json/leanautolinks/v1/applied/stats \
   -u "admin:YOUR_APP_PASSWORD"
 ```
 
@@ -186,7 +185,7 @@ Agents can poll the performance endpoint to detect degradation before it affects
 
 ```bash
 # Get performance summary
-curl http://localhost:8080/wp-json/leanautolinks/v1/performance/summary \
+curl https://your-site.com/wp-json/leanautolinks/v1/performance/summary \
   -u "admin:YOUR_APP_PASSWORD"
 
 # Example response
@@ -205,7 +204,7 @@ curl http://localhost:8080/wp-json/leanautolinks/v1/performance/summary \
 Sync rules from a CRM, affiliate platform, or spreadsheet.
 
 ```bash
-curl -X POST http://localhost:8080/wp-json/leanautolinks/v1/rules/import \
+curl -X POST https://your-site.com/wp-json/leanautolinks/v1/rules/import \
   -H "Content-Type: application/json" \
   -u "admin:YOUR_APP_PASSWORD" \
   -d '{
@@ -296,6 +295,52 @@ wp leanautolinks cache clear
 # Run performance benchmark
 wp leanautolinks benchmark --posts=1000 --rules=500
 ```
+
+## Migrating from Other Plugins
+
+LeanAutoLinks can coexist with other internal linking plugins during migration. The recommended approach:
+
+### From Internal Link Juicer (ILJ)
+
+ILJ stores linking rules in `wp_options` as serialized data. You can extract them and import via the LeanAutoLinks API:
+
+1. Export your ILJ keywords from the ILJ settings or directly from the database (`ilj_linkindex_*` tables).
+2. Map each ILJ keyword to a LeanAutoLinks rule using the bulk import endpoint:
+
+```bash
+curl -X POST https://your-site.com/wp-json/leanautolinks/v1/rules/import \
+  -H "Content-Type: application/json" \
+  -u "admin:YOUR_APP_PASSWORD" \
+  -d '{
+    "rules": [
+      {"keyword": "your keyword", "target_url": "/your-target-page/", "rule_type": "internal", "max_per_post": 1},
+      {"keyword": "another keyword", "target_url": "/another-page/", "rule_type": "internal", "max_per_post": 1}
+    ]
+  }'
+```
+
+3. Trigger bulk reprocessing to apply all rules:
+
+```bash
+curl -X POST https://your-site.com/wp-json/leanautolinks/v1/queue/bulk \
+  -H "Content-Type: application/json" \
+  -u "admin:YOUR_APP_PASSWORD" \
+  -d '{"scope": "all"}'
+```
+
+4. Once verified, deactivate ILJ.
+
+### From Link Whisper, Rank Math, or Others
+
+The same API-based approach works for any plugin. Extract your existing rules (keywords + target URLs) into JSON and use the `/rules/import` endpoint. The REST API makes it straightforward to automate migration with scripts or AI agents.
+
+### AI Agent Migration
+
+The API is designed for AI agent workflows. You can instruct an agent (e.g., via OpenClaw, ChatGPT, or Claude) to:
+1. Read your existing plugin's rules from the database
+2. Transform them into LeanAutoLinks format
+3. Import via the REST API
+4. Monitor processing via the `/queue` and `/health` endpoints
 
 ## Contributing
 

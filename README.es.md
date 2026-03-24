@@ -2,7 +2,7 @@
 
 > Plugin de WordPress lean y API-first para automatizar enlaces internos en sitios de alto volumen.
 
-![WordPress Plugin Version](https://img.shields.io/badge/WordPress-Plugin_v0.1.0-blue?logo=wordpress)
+![WordPress Plugin Version](https://img.shields.io/badge/WordPress-Plugin_v0.2.0-blue?logo=wordpress)
 ![PHP 8.1+](https://img.shields.io/badge/PHP-8.1%2B-777BB4?logo=php&logoColor=white)
 ![License: GPLv2](https://img.shields.io/badge/License-GPLv2-green.svg)
 
@@ -47,7 +47,7 @@ LeanAutoLinks fue construido para un sitio que publica 100 posts por dia con 1,0
 **Via la API:**
 
 ```bash
-curl -X POST https://tu-sitio.com/wp-json/leanautolinks/v1/rules \
+curl -X POST https://your-site.com/wp-json/leanautolinks/v1/rules \
   -H "Content-Type: application/json" \
   -u "admin:TU_APP_PASSWORD" \
   -d '{
@@ -61,7 +61,7 @@ curl -X POST https://tu-sitio.com/wp-json/leanautolinks/v1/rules \
 Los posts nuevos y actualizados se procesan automaticamente en segundo plano. Para reprocesar contenido existente en bulk:
 
 ```bash
-curl -X POST https://tu-sitio.com/wp-json/leanautolinks/v1/queue/bulk \
+curl -X POST https://your-site.com/wp-json/leanautolinks/v1/queue/bulk \
   -H "Content-Type: application/json" \
   -u "admin:TU_APP_PASSWORD" \
   -d '{"post_type": "post", "limit": 15000}'

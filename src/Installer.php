@@ -150,7 +150,7 @@ final class Installer
         $defaults = [
             'leanautolinks_supported_post_types' => ['post', 'page'],
             'leanautolinks_max_links_per_post'   => 10,
-            'leanautolinks_batch_size'           => 100,
+            'leanautolinks_batch_size'           => 25,
             'leanautolinks_max_concurrent_jobs'  => 3,
         ];
 
