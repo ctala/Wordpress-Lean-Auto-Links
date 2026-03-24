@@ -51,6 +51,10 @@ final class RulesController extends RestController
                         'type'    => 'string',
                         'default' => '',
                     ],
+                    'entity_type' => [
+                        'type'    => 'string',
+                        'default' => '',
+                    ],
                     'search' => [
                         'type'    => 'string',
                         'default' => '',
@@ -121,6 +125,12 @@ final class RulesController extends RestController
         if ($is_active !== '' && $is_active !== null) {
             $where   .= ' AND is_active = %d';
             $params[] = (int) $is_active;
+        }
+
+        $entity_type = $request->get_param('entity_type');
+        if (!empty($entity_type)) {
+            $where   .= ' AND entity_type = %s';
+            $params[] = $entity_type;
         }
 
         $search = $request->get_param('search');

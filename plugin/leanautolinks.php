@@ -4,7 +4,7 @@ declare(strict_types=1);
 /**
  * Plugin Name: LeanAutoLinks
  * Description: Lean, API-first automated internal linking for high-volume WordPress sites.
- * Version:     0.3.2
+ * Version:     0.4.0
  * Requires PHP: 8.1
  * Author:      Cristian Tala Sánchez
  * Author URI:  https://cristiantala.com/
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('LEANAUTOLINKS_VERSION', '0.3.2');
+define('LEANAUTOLINKS_VERSION', '0.4.0');
 define('LEANAUTOLINKS_FILE', __FILE__);
 define('LEANAUTOLINKS_DIR', plugin_dir_path(__FILE__));
 define('LEANAUTOLINKS_URL', plugin_dir_url(__FILE__));

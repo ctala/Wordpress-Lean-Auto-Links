@@ -125,6 +125,15 @@ paths:
           schema:
             type: integer
             enum: [0, 1]
+        - name: entity_type
+          in: query
+          description: |
+            Filter entity rules by entity type (e.g., `glossary`, `actor`, `company`, `vc`, `person`).
+            Only meaningful when combined with `rule_type=entity`, but works independently too.
+          required: false
+          schema:
+            type: string
+            example: glossary
         - name: search
           in: query
           description: Search rules by keyword (partial match).
@@ -1644,10 +1653,38 @@ components:
       type: string
       enum: [internal, affiliate, entity]
       description: |
-        The type of linking rule:
-        - `internal`: Glossary terms and internal content links (TTL: 24h).
-        - `affiliate`: Affiliate product/service links with `rel="sponsored nofollow"` (TTL: 12h).
-        - `entity`: Entity/actor links for companies, VCs, and people (TTL: 24h).
+        The type of linking rule. Each type serves a different SEO and organizational purpose:
+
+        **`internal`** — Standard internal links between posts, pages, and archives.
+        Use this for general keyword-to-page linking where the target is regular
+        WordPress content. The link tag is a plain `<a href="...">`. Cache TTL: 24h.
+
+        Examples: "startup" -> /que-es-una-startup/, "machine learning" -> /glosario/machine-learning/
+
+        **`entity`** — Links to Custom Post Type (CPT) entries that represent real-world
+        entities: companies, VCs, people, glossary terms, products, etc. Use this when
+        the target URL belongs to a CPT and you want to track which entity the rule
+        belongs to via `entity_type` and `entity_id`. The link HTML is identical to
+        `internal`, but the metadata enables entity-aware reporting and bulk operations
+        (e.g., "show all rules linked to actor CPT", "resync glossary rules from CPT").
+        Cache TTL: 24h.
+
+        When to use `entity` instead of `internal`:
+        - The target is a CPT entry (actor, glossary term, company, VC, person).
+        - You want to query rules by `entity_type` or `entity_id`.
+        - You plan to sync rules programmatically from a CPT or external system.
+
+        Supported `entity_type` values (convention, not enforced):
+        `glossary`, `actor`, `company`, `vc`, `person`, `product`, or any custom string.
+
+        Examples: "Y Combinator" -> /actores/y-combinator/ (entity_type: "company", entity_id: 42)
+
+        **`affiliate`** — External affiliate/referral links. Always rendered with
+        `rel="sponsored nofollow"` regardless of the `nofollow` and `sponsored` field
+        values. Use this for any monetized or partnership link where Google requires
+        the `sponsored` signal. Cache TTL: 12h (shorter to allow quick campaign changes).
+
+        Examples: "Notion" -> https://affiliate.example.com/notion?ref=site
 
     QueueStatus:
       type: string

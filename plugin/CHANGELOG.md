@@ -5,6 +5,15 @@ All notable changes to the LeanAutoLinks plugin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-03-24
+
+### Added
+
+- **Applied links visible in dashboard** -- new "Recent Applied Links" table in the Dashboard tab showing the last 25 links with keyword, target URL, rule type, post name, and date.
+- **Target URL in meta box and Gutenberg panel** -- applied keywords now show the destination URL below each keyword, both in the classic editor meta box and the block editor sidebar panel.
+- **`entity_type` API filter** -- `GET /rules?entity_type=glossary` filters rules by entity type. Enables agents to query and manage rules by entity category (glossary, actor, company, vc, person).
+- **Rule type documentation** -- comprehensive documentation of `internal`, `entity`, and `affiliate` rule types with decision flowchart in AGENTS.md and detailed descriptions in openapi.yaml.
+
 ## [0.3.2] - 2026-03-24
 
 ### Fixed
@@ -108,6 +117,7 @@ Benchmarked against a production-scale dataset from ecosistemastartup.com:
 | Frontend queries added | 0 | 0 |
 | Memory per job | < 32 MB | Within budget |
 
+[0.4.0]: https://github.com/ctala/Lean-Auto-Links/releases/tag/v0.4.0
 [0.3.2]: https://github.com/ctala/Lean-Auto-Links/releases/tag/v0.3.2
 [0.3.1]: https://github.com/ctala/Lean-Auto-Links/releases/tag/v0.3.1
 [0.3.0]: https://github.com/ctala/Wordpress-Lean-Auto-Links/releases/tag/v0.3.0

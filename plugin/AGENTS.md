@@ -34,10 +34,10 @@ A **rule** maps a keyword to a target URL. When the engine processes a post, it 
 
 | Field | Type | Description |
 |---|---|---|
-| `keyword` | string | Text to match in post content (required) |
+| `keyword` | string | Text to match in post content (required, must be unique across all rules) |
 | `target_url` | string | URL to link to (required) |
-| `rule_type` | enum | `internal`, `affiliate`, or `entity` |
-| `entity_type` | string | For entity rules: `glossary`, `company`, `vc`, `person` |
+| `rule_type` | enum | `internal`, `affiliate`, or `entity` (see Rule Types below) |
+| `entity_type` | string | For entity rules: `glossary`, `actor`, `company`, `vc`, `person` |
 | `entity_id` | int | WordPress post ID of the entity (optional) |
 | `priority` | int 1-100 | Lower = processed first. Default: 10 |
 | `max_per_post` | int 1-10 | Max times this keyword is linked per post. Default: 1 |
@@ -45,6 +45,52 @@ A **rule** maps a keyword to a target URL. When the engine processes a post, it 
 | `nofollow` | bool | Add `rel="nofollow"`. Default: false |
 | `sponsored` | bool | Add `rel="sponsored"`. Default: false. Auto-set for affiliate rules |
 | `is_active` | bool | Whether rule is active. Default: true |
+
+### Rule Types — When to Use Each
+
+| Type | Use Case | HTML Output | `rel` attribute | Extra Fields |
+|---|---|---|---|---|
+| `internal` | Regular post-to-post or post-to-page links | `<a href="/target/">keyword</a>` | none | — |
+| `entity` | Links to CPT entries (glossary, actors, companies, VCs) | `<a href="/target/">keyword</a>` | none | `entity_type`, `entity_id` |
+| `affiliate` | External monetized/referral links | `<a href="https://..." rel="sponsored nofollow">keyword</a>` | `sponsored nofollow` (always) | — |
+
+**`internal`** — The default. Use for any link between regular WordPress content: posts linking to other posts, pages, category archives, etc.
+
+```json
+{"rule_type": "internal", "keyword": "startup", "target_url": "/que-es-una-startup/"}
+```
+
+**`entity`** — Use when the target is a Custom Post Type (CPT) entry representing a real-world entity. The `entity_type` and `entity_id` fields enable entity-aware operations:
+- Query all rules linked to a specific entity type: `GET /rules?rule_type=entity&entity_type=glossary`
+- Sync rules from a CPT programmatically (e.g., when a new glossary term is created, auto-create a rule)
+- Bulk manage rules by entity category
+
+```json
+{
+  "rule_type": "entity",
+  "keyword": "Y Combinator",
+  "target_url": "/actores/y-combinator/",
+  "entity_type": "company",
+  "entity_id": 42
+}
+```
+
+Common `entity_type` values: `glossary`, `actor`, `company`, `vc`, `person`, `product` (convention, not enforced — any string works).
+
+**`affiliate`** — Use for any external link that generates revenue. The `rel="sponsored nofollow"` attribute is **always** added automatically, regardless of the `nofollow`/`sponsored` field values. This ensures compliance with Google's link spam policies.
+
+```json
+{"rule_type": "affiliate", "keyword": "Notion", "target_url": "https://affiliate.example.com/notion?ref=site"}
+```
+
+**Decision flowchart for agents:**
+```
+Is the link external and monetized? → affiliate
+Is the target a CPT entry (actor, glossary, company)? → entity
+Everything else → internal
+```
+
+**Important:** The same keyword cannot be used in two different rules. API returns HTTP 409 if a duplicate keyword is detected. Self-linking is automatically prevented (a post about "startup" at /que-es-una-startup/ won't link "startup" to itself).
 
 ### Queue
 Posts are processed asynchronously. When a post is saved or a bulk reprocess is triggered, post IDs are added to the **queue**. Action Scheduler picks them up in the background.

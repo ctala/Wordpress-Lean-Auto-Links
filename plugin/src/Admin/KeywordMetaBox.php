@@ -143,12 +143,20 @@ final class KeywordMetaBox
                     <strong><?php echo esc_html__('Applied Keywords', 'leanautolinks'); ?></strong>
                     <ul class="lw-metabox-list">
                         <?php foreach ($applied_rules as $rule) : ?>
-                            <li class="lw-metabox-item">
-                                <span class="lw-metabox-keyword"><?php echo esc_html($rule->keyword); ?></span>
-                                <span class="lw-metabox-badge lw-metabox-badge-<?php echo esc_attr($rule->rule_type); ?>">
-                                    <?php echo esc_html(ucfirst($rule->rule_type)); ?>
-                                </span>
-                                <span class="lw-metabox-count">&times;<?php echo esc_html((string) $rule->link_count); ?></span>
+                            <li class="lw-metabox-item-detailed">
+                                <div class="lw-metabox-item-row">
+                                    <span class="lw-metabox-keyword"><?php echo esc_html($rule->keyword); ?></span>
+                                    <span class="lw-metabox-badge lw-metabox-badge-<?php echo esc_attr($rule->rule_type); ?>">
+                                        <?php echo esc_html(ucfirst($rule->rule_type)); ?>
+                                    </span>
+                                    <span class="lw-metabox-count">&times;<?php echo esc_html((string) $rule->link_count); ?></span>
+                                </div>
+                                <div class="lw-metabox-target-url">
+                                    <span class="dashicons dashicons-admin-links"></span>
+                                    <a href="<?php echo esc_url($rule->target_url); ?>" target="_blank" rel="noopener" title="<?php echo esc_attr($rule->target_url); ?>">
+                                        <?php echo esc_html($rule->target_url); ?>
+                                    </a>
+                                </div>
                             </li>
                         <?php endforeach; ?>
                     </ul>

@@ -298,29 +298,61 @@
                                 return el('li', {
                                     key: 'applied-' + item.id,
                                     style: {
-                                        display: 'flex',
-                                        alignItems: 'center',
                                         padding: '6px 0',
                                         borderBottom: '1px solid #e0e0e0',
                                     },
                                 },
-                                    el('span', {
+                                    el('div', {
                                         style: {
-                                            fontWeight: 500,
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap',
-                                            flex: 1,
+                                            display: 'flex',
+                                            alignItems: 'center',
                                         },
-                                    }, item.keyword),
-                                    el(RuleTypeBadge, { type: item.rule_type }),
-                                    el('span', {
+                                    },
+                                        el('span', {
+                                            style: {
+                                                fontWeight: 500,
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
+                                                flex: 1,
+                                            },
+                                        }, item.keyword),
+                                        el(RuleTypeBadge, { type: item.rule_type }),
+                                        el('span', {
+                                            style: {
+                                                marginLeft: '6px',
+                                                fontSize: '11px',
+                                                color: '#757575',
+                                            },
+                                        }, '\u00d7' + item.link_count)
+                                    ),
+                                    el('div', {
                                         style: {
-                                            marginLeft: '6px',
+                                            marginTop: '2px',
                                             fontSize: '11px',
                                             color: '#757575',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '3px',
                                         },
-                                    }, '\u00d7' + item.link_count)
+                                    },
+                                        el('span', {
+                                            className: 'dashicons dashicons-admin-links',
+                                            style: { fontSize: '12px', width: '12px', height: '12px' },
+                                        }),
+                                        el('a', {
+                                            href: item.target_url,
+                                            target: '_blank',
+                                            rel: 'noopener',
+                                            style: {
+                                                color: '#2271b1',
+                                                textDecoration: 'none',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
+                                            },
+                                        }, item.target_url)
+                                    )
                                 );
                             })
                         )

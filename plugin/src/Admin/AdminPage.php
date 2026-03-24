@@ -371,6 +371,73 @@ final class AdminPage
             <div id="lw-action-status" class="lw-status-message" style="display:none;"></div>
         </div>
 
+        <!-- Recent Applied Links -->
+        <div class="lw-section">
+            <h2><?php echo esc_html__('Recent Applied Links', 'leanautolinks'); ?></h2>
+            <?php
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+            $recent_applied = $wpdb->get_results(
+                "SELECT al.keyword, al.target_url, al.post_id, al.applied_at, r.rule_type,
+                        p.post_title
+                 FROM {$applied_table} al
+                 INNER JOIN {$rules_table} r ON al.rule_id = r.id
+                 LEFT JOIN {$wpdb->posts} p ON al.post_id = p.ID
+                 WHERE al.rule_id != 0
+                 ORDER BY al.applied_at DESC
+                 LIMIT 25"
+            );
+            ?>
+            <?php if (!empty($recent_applied)) : ?>
+                <table class="widefat striped">
+                    <thead>
+                        <tr>
+                            <th><?php echo esc_html__('Keyword', 'leanautolinks'); ?></th>
+                            <th><?php echo esc_html__('Target URL', 'leanautolinks'); ?></th>
+                            <th><?php echo esc_html__('Type', 'leanautolinks'); ?></th>
+                            <th><?php echo esc_html__('Applied In', 'leanautolinks'); ?></th>
+                            <th><?php echo esc_html__('Date', 'leanautolinks'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($recent_applied as $al) : ?>
+                            <tr>
+                                <td><strong><?php echo esc_html($al->keyword); ?></strong></td>
+                                <td>
+                                    <a href="<?php echo esc_url($al->target_url); ?>" target="_blank" rel="noopener" title="<?php echo esc_attr($al->target_url); ?>">
+                                        <?php echo esc_html(mb_strimwidth($al->target_url, 0, 50, '...')); ?>
+                                    </a>
+                                </td>
+                                <td>
+                                    <?php
+                                    $type_class = match ($al->rule_type) {
+                                        'affiliate' => 'lw-badge-orange',
+                                        'entity'    => 'lw-badge-blue',
+                                        default     => 'lw-badge-green',
+                                    };
+                                    ?>
+                                    <span class="lw-badge <?php echo esc_attr($type_class); ?>">
+                                        <?php echo esc_html(ucfirst($al->rule_type)); ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <?php if (!empty($al->post_title)) : ?>
+                                        <a href="<?php echo esc_url(get_permalink((int) $al->post_id) ?: '#'); ?>" target="_blank" rel="noopener">
+                                            <?php echo esc_html(mb_strimwidth($al->post_title, 0, 40, '...')); ?>
+                                        </a>
+                                    <?php else : ?>
+                                        #<?php echo esc_html((string) $al->post_id); ?>
+                                    <?php endif; ?>
+                                </td>
+                                <td><?php echo esc_html($al->applied_at ? wp_date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($al->applied_at)) : '—'); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php else : ?>
+                <p class="description"><?php echo esc_html__('No links applied yet. Process some posts to see applied links here.', 'leanautolinks'); ?></p>
+            <?php endif; ?>
+        </div>
+
         <!-- Recent Activity -->
         <div class="lw-section">
             <h2><?php echo esc_html__('Recent Activity', 'leanautolinks'); ?></h2>
