@@ -154,21 +154,54 @@ LeanAutoLinks esta disenado como infraestructura para agentes de IA y pipelines 
 
 ## Comandos WP-CLI
 
+### Procesar todo de inmediato (sin esperar al cron)
+
+Para configuracion inicial o migraciones en sitios grandes, usa `process-now` para procesar todo inmediatamente:
+
 ```bash
-# Seed de datos de prueba para benchmarking
+# Procesar todos los posts pendientes
+wp leanautolinks process-now
+
+# Con batches mas grandes para mayor velocidad
+wp leanautolinks process-now --batch-size=100
+```
+
+Esto corre como proceso PHP CLI -- no afecta el rendimiento del sitio y no tiene timeout. En un sitio con 25,000 posts, toma ~30 minutos con `--batch-size=100`.
+
+### Otros comandos
+
+```bash
+# Encolar todos los posts para reprocesamiento
+wp leanautolinks bulk-reprocess
+
+# Ver estadisticas de la cola
+wp leanautolinks queue-stats
+
+# Gestion de cache
+wp leanautolinks cache flush
+wp leanautolinks cache stats
+wp leanautolinks cache warm
+
+# Seed de datos de prueba (solo desarrollo)
 wp leanautolinks seed --posts=15000 --actors=500 --glossary=500 --affiliates=100
+```
 
-# Reprocesar todos los posts
-wp leanautolinks reprocess --all
+## Cron del sistema (Recomendado para produccion)
 
-# Reprocesar posts por tipo
-wp leanautolinks reprocess --post-type=post --limit=5000
+Por defecto, LeanAutoLinks usa WP-Cron para procesamiento en segundo plano. Funciona bien en sitios con trafico regular.
 
-# Limpiar todos los caches
-wp leanautolinks cache clear
+Sin embargo, WP-Cron depende de visitas al sitio. En sitios con cache agresivo (Cloudflare, Varnish) o poco trafico, la cola puede estancarse. Hosts administrados como WP Engine, Kinsta y Pantheon manejan esto automaticamente.
 
-# Ejecutar benchmark de rendimiento
-wp leanautolinks benchmark --posts=1000 --rules=500
+Para servidores propios:
+
+```php
+// wp-config.php
+define('DISABLE_WP_CRON', true);
+```
+
+```bash
+# Cron del sistema (cada minuto)
+* * * * * cd /ruta/a/wordpress && wp cron event run --due-now > /dev/null 2>&1
 ```
 
 ## Contribuir
