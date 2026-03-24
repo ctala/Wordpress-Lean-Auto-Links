@@ -5,11 +5,12 @@ All notable changes to the LeanAutoLinks plugin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.2] - 2026-03-24
+## [0.4.3] - 2026-03-24
 
 ### Fixed
 
 - **Double confirmation popup on Reprocess All Posts** -- Queue tab's reprocess button triggered two consecutive `confirm()` dialogs (one inline `onclick`, one from the jQuery handler). Removed the redundant inline handler.
+- **Public repo structure restored** -- Wordpress-Lean-Auto-Links now contains only plugin files at root level, not the full project structure.
 
 ## [0.4.1] - 2026-03-24
 
@@ -133,7 +134,7 @@ Benchmarked against a production-scale dataset from ecosistemastartup.com:
 | Frontend queries added | 0 | 0 |
 | Memory per job | < 32 MB | Within budget |
 
-[0.4.2]: https://github.com/ctala/Wordpress-Lean-Auto-Links/releases/tag/v0.4.2
+[0.4.3]: https://github.com/ctala/Wordpress-Lean-Auto-Links/releases/tag/v0.4.3
 [0.4.1]: https://github.com/ctala/Wordpress-Lean-Auto-Links/releases/tag/v0.4.1
 [0.4.0]: https://github.com/ctala/Wordpress-Lean-Auto-Links/releases/tag/v0.4.0
 [0.3.2]: https://github.com/ctala/Wordpress-Lean-Auto-Links/releases/tag/v0.3.2
