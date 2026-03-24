@@ -1138,22 +1138,28 @@ final class AdminPage
                         &mdash; <span class="lw-eta lw-queue-idle"><?php echo esc_html__('Queue idle — waiting for cron trigger', 'leanautolinks'); ?></span>
                     <?php else :
                         $perf_table = $wpdb->prefix . 'lw_performance_log';
-                        $avg_ms = (float) $wpdb->get_var(
-                            "SELECT AVG(duration_ms) FROM {$perf_table} WHERE event_type = 'process_single' AND logged_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR)"
+                        // Calculate ETA from observed throughput (posts processed in last 5 minutes).
+                        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+                        $recent_count = (int) $wpdb->get_var(
+                            "SELECT COUNT(*) FROM {$perf_table} WHERE event_type = 'process_single' AND logged_at >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)"
                         );
-                        if ($avg_ms <= 0) {
+                        if ($recent_count > 0) {
+                            // Real throughput: posts processed per second in the last 5 minutes.
+                            $posts_per_second = $recent_count / 300.0;
+                            $eta_seconds = (int) ($remaining_posts / $posts_per_second);
+                        } else {
+                            // Fallback: estimate from avg processing time + 60s cron interval.
+                            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
                             $avg_ms = (float) $wpdb->get_var(
                                 "SELECT AVG(duration_ms) FROM {$perf_table} WHERE event_type = 'process_single'"
                             );
+                            if ($avg_ms <= 0) {
+                                $avg_ms = 100.0;
+                            }
+                            $batch_size = (int) get_option('leanautolinks_batch_size', 25);
+                            $seconds_per_batch = ($batch_size * $avg_ms / 1000) + 60;
+                            $eta_seconds = (int) (ceil($remaining_posts / $batch_size) * $seconds_per_batch);
                         }
-                        if ($avg_ms <= 0) {
-                            $avg_ms = 100.0;
-                        }
-                        $batch_size = (int) get_option('leanautolinks_batch_size', 25);
-                        $concurrent = (int) get_option('leanautolinks_max_concurrent_jobs', 3);
-                        $batches_left = ceil($remaining_posts / $batch_size);
-                        $seconds_per_batch = ($batch_size * $avg_ms / 1000) + 60;
-                        $eta_seconds = (int) ($batches_left * $seconds_per_batch / max($concurrent, 1));
 
                         if ($eta_seconds < 60) :
                             $eta_text = __('< 1 minute remaining', 'leanautolinks');
