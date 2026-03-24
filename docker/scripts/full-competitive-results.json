@@ -1,0 +1,194 @@
+{
+    "timestamp": "2026-03-24T15:10:06Z",
+    "environment": {
+        "php_version": "8.3.30",
+        "mysql_version": "8.0.45",
+        "wp_version": "6.4.3",
+        "post_count": 25395
+    },
+    "plugins": [],
+    "baseline": {
+        "p50_ms": 0.071,
+        "p95_ms": 0.281,
+        "max_ms": 0.691
+    },
+    "all_plugins_active": {
+        "p50_ms": 7.72,
+        "p95_ms": 14.43,
+        "max_ms": 14.92,
+        "avg_queries": 17.2,
+        "max_queries": 19
+    },
+    "save_post_all": {
+        "p50_ms": 9.58,
+        "p95_ms": 12.69,
+        "max_ms": 12.69
+    },
+    "db_footprint": {
+        "LeanWeave": {
+            "tables": [
+                "wp_lw_applied_links",
+                "wp_lw_exclusions",
+                "wp_lw_performance_log",
+                "wp_lw_queue",
+                "wp_lw_rules"
+            ],
+            "total_rows": 26748,
+            "total_kb": 5744
+        },
+        "Internal Link Juicer": {
+            "tables": [
+                "wp_ilj_linkindex"
+            ],
+            "total_rows": 0,
+            "total_kb": 80
+        },
+        "Autolinks Manager": {
+            "tables": [
+                "wp_daextam_autolink",
+                "wp_daextam_category",
+                "wp_daextam_statistic",
+                "wp_daextam_term_group"
+            ],
+            "total_rows": 0,
+            "total_kb": 64
+        },
+        "Interlinks Manager": {
+            "tables": [
+                "wp_daextinma_anchors",
+                "wp_daextinma_archive",
+                "wp_daextinma_juice"
+            ],
+            "total_rows": 0,
+            "total_kb": 48
+        }
+    },
+    "rest_api": {
+        "LeanWeave": {
+            "endpoint_count": 17,
+            "endpoints": [
+                "\/leanweave\/v1",
+                "\/leanweave\/v1\/rules",
+                "\/leanweave\/v1\/rules\/(?P<id>\\d+)",
+                "\/leanweave\/v1\/rules\/(?P<id>\\d+)\/toggle",
+                "\/leanweave\/v1\/rules\/import",
+                "\/leanweave\/v1\/queue",
+                "\/leanweave\/v1\/queue\/bulk",
+                "\/leanweave\/v1\/queue\/retry",
+                "\/leanweave\/v1\/queue\/clear-done",
+                "\/leanweave\/v1\/queue\/(?P<post_id>\\d+)",
+                "\/leanweave\/v1\/applied",
+                "\/leanweave\/v1\/applied\/stats",
+                "\/leanweave\/v1\/exclusions",
+                "\/leanweave\/v1\/exclusions\/(?P<id>\\d+)",
+                "\/leanweave\/v1\/performance\/summary",
+                "\/leanweave\/v1\/performance\/log",
+                "\/leanweave\/v1\/health"
+            ]
+        },
+        "Internal Link Juicer": {
+            "endpoint_count": 0,
+            "endpoints": []
+        },
+        "Autolinks Manager": {
+            "endpoint_count": 0,
+            "endpoints": []
+        },
+        "Interlinks Manager": {
+            "endpoint_count": 0,
+            "endpoints": []
+        },
+        "LinkBoss": {
+            "endpoint_count": 10,
+            "endpoints": [
+                "\/linkboss\/v1",
+                "\/linkboss\/v1\/init",
+                "\/linkboss\/v1\/init\/set",
+                "\/linkboss\/v1\/notices",
+                "\/linkboss\/v1\/auth",
+                "\/linkboss\/v1\/auth\/refresh-token",
+                "\/linkboss\/v1\/settings",
+                "\/linkboss\/v1\/settings\/update",
+                "\/linkboss\/v1\/proxy-sync",
+                "\/linkboss\/v1\/dashboard"
+            ]
+        },
+        "Auto Internal Links": {
+            "endpoint_count": 1,
+            "endpoints": [
+                "\/wp-block-editor\/v1\/url-details"
+            ]
+        },
+        "Internal Links Manager": {
+            "endpoint_count": 0,
+            "endpoints": []
+        }
+    },
+    "features": {
+        "LeanWeave": {
+            "rest_api": true,
+            "background_process": true,
+            "bulk_import": true,
+            "queue_monitoring": true,
+            "health_endpoint": true,
+            "affiliate_support": true,
+            "cli_commands": true,
+            "custom_tables": true,
+            "object_cache": true,
+            "accent_insensitive": true,
+            "unicode_boundaries": true
+        },
+        "Internal Link Juicer": {
+            "rest_api": false,
+            "background_process": true,
+            "bulk_import": false,
+            "queue_monitoring": false,
+            "health_endpoint": false,
+            "affiliate_support": false,
+            "cli_commands": false,
+            "custom_tables": true,
+            "object_cache": false,
+            "accent_insensitive": false,
+            "unicode_boundaries": false
+        },
+        "Autolinks Manager": {
+            "rest_api": false,
+            "background_process": false,
+            "bulk_import": false,
+            "queue_monitoring": false,
+            "health_endpoint": false,
+            "affiliate_support": true,
+            "cli_commands": false,
+            "custom_tables": true,
+            "object_cache": false,
+            "accent_insensitive": false,
+            "unicode_boundaries": false
+        },
+        "Internal Links Manager": {
+            "rest_api": false,
+            "background_process": false,
+            "bulk_import": false,
+            "queue_monitoring": false,
+            "health_endpoint": false,
+            "affiliate_support": true,
+            "cli_commands": false,
+            "custom_tables": true,
+            "object_cache": false,
+            "accent_insensitive": false,
+            "unicode_boundaries": false
+        },
+        "Interlinks Manager": {
+            "rest_api": false,
+            "background_process": false,
+            "bulk_import": false,
+            "queue_monitoring": false,
+            "health_endpoint": false,
+            "affiliate_support": false,
+            "cli_commands": false,
+            "custom_tables": true,
+            "object_cache": false,
+            "accent_insensitive": false,
+            "unicode_boundaries": false
+        }
+    }
+}

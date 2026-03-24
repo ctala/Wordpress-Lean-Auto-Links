@@ -1,0 +1,252 @@
+{
+    "timestamp": "2026-03-24T14:43:12Z",
+    "environment": {
+        "php_version": "8.3.30",
+        "mysql_version": "8.0.45",
+        "wp_version": "6.4.3",
+        "post_count": 25394
+    },
+    "plugins_tested": {
+        "leanweave": {
+            "status": "active",
+            "the_content_avg": 2.47,
+            "the_content_max": 3.95,
+            "queries_avg": 10,
+            "queries_max": 10
+        },
+        "internal-link-juicer": {
+            "status": "not_active",
+            "note": "Plugin file not found or not active"
+        },
+        "internal-links-manager": {
+            "status": "active",
+            "the_content_avg": 2.75,
+            "the_content_max": 4,
+            "queries_avg": 10,
+            "queries_max": 10
+        }
+    },
+    "baseline": {
+        "avg_ms": 0.11,
+        "max_ms": 0.64,
+        "avg_queries": 0,
+        "max_queries": 0
+    },
+    "the_content_all_plugins": {
+        "avg_ms": 4.77,
+        "max_ms": 9.16,
+        "avg_queries": 11.1,
+        "max_queries": 12,
+        "detail": [
+            {
+                "post_id": 5511,
+                "duration_ms": 9.16,
+                "queries": 12,
+                "memory_kb": 0,
+                "content_len": 5846
+            },
+            {
+                "post_id": 823,
+                "duration_ms": 3.97,
+                "queries": 11,
+                "memory_kb": 0,
+                "content_len": 3361
+            },
+            {
+                "post_id": 662,
+                "duration_ms": 5.91,
+                "queries": 11,
+                "memory_kb": 0,
+                "content_len": 6511
+            },
+            {
+                "post_id": 23459,
+                "duration_ms": 6.48,
+                "queries": 11,
+                "memory_kb": 0,
+                "content_len": 2507
+            },
+            {
+                "post_id": 20907,
+                "duration_ms": 7.99,
+                "queries": 11,
+                "memory_kb": 0,
+                "content_len": 3041
+            },
+            {
+                "post_id": 7288,
+                "duration_ms": 4.76,
+                "queries": 11,
+                "memory_kb": 2048,
+                "content_len": 5371
+            },
+            {
+                "post_id": 19438,
+                "duration_ms": 3.66,
+                "queries": 11,
+                "memory_kb": 0,
+                "content_len": 3294
+            },
+            {
+                "post_id": 13510,
+                "duration_ms": 3.75,
+                "queries": 11,
+                "memory_kb": 0,
+                "content_len": 3424
+            },
+            {
+                "post_id": 23863,
+                "duration_ms": 2.36,
+                "queries": 11,
+                "memory_kb": 0,
+                "content_len": 1133
+            },
+            {
+                "post_id": 11027,
+                "duration_ms": 4.67,
+                "queries": 11,
+                "memory_kb": 0,
+                "content_len": 2943
+            },
+            {
+                "post_id": 3812,
+                "duration_ms": 6.16,
+                "queries": 11,
+                "memory_kb": 0,
+                "content_len": 10687
+            },
+            {
+                "post_id": 15663,
+                "duration_ms": 4.14,
+                "queries": 11,
+                "memory_kb": 0,
+                "content_len": 3496
+            },
+            {
+                "post_id": 1929,
+                "duration_ms": 5.8,
+                "queries": 11,
+                "memory_kb": 0,
+                "content_len": 9462
+            },
+            {
+                "post_id": 4443,
+                "duration_ms": 3.64,
+                "queries": 11,
+                "memory_kb": 0,
+                "content_len": 4261
+            },
+            {
+                "post_id": 10066,
+                "duration_ms": 4.36,
+                "queries": 11,
+                "memory_kb": 0,
+                "content_len": 6332
+            },
+            {
+                "post_id": 5622,
+                "duration_ms": 4.54,
+                "queries": 11,
+                "memory_kb": 0,
+                "content_len": 6582
+            },
+            {
+                "post_id": 16521,
+                "duration_ms": 2.74,
+                "queries": 11,
+                "memory_kb": 0,
+                "content_len": 2544
+            },
+            {
+                "post_id": 5932,
+                "duration_ms": 4.44,
+                "queries": 11,
+                "memory_kb": 0,
+                "content_len": 6476
+            },
+            {
+                "post_id": 13671,
+                "duration_ms": 2.89,
+                "queries": 11,
+                "memory_kb": 0,
+                "content_len": 2813
+            },
+            {
+                "post_id": 10131,
+                "duration_ms": 4.05,
+                "queries": 11,
+                "memory_kb": 0,
+                "content_len": 5216
+            }
+        ]
+    },
+    "save_post_all_plugins": {
+        "avg_ms": 7.64,
+        "max_ms": 9.93,
+        "times": [
+            9.93,
+            6.76,
+            7.08,
+            7.38,
+            7.03
+        ]
+    },
+    "db_footprint": {
+        "wp_ilj_linkindex": {
+            "rows": 0,
+            "size_kb": 80
+        },
+        "wp_lw_applied_links": {
+            "rows": 0,
+            "size_kb": 48
+        },
+        "wp_lw_exclusions": {
+            "rows": 0,
+            "size_kb": 16
+        },
+        "wp_lw_performance_log": {
+            "rows": 0,
+            "size_kb": 48
+        },
+        "wp_lw_queue": {
+            "rows": 25674,
+            "size_kb": 5184
+        },
+        "wp_lw_rules": {
+            "rows": 1074,
+            "size_kb": 448
+        }
+    },
+    "api_availability": {
+        "leanweave": {
+            "\/leanweave\/v1\/health": {
+                "status": 401,
+                "available": true
+            },
+            "\/leanweave\/v1\/rules": {
+                "status": 400,
+                "available": true
+            },
+            "\/leanweave\/v1\/queue": {
+                "status": 400,
+                "available": true
+            },
+            "\/leanweave\/v1\/applied\/stats": {
+                "status": 401,
+                "available": true
+            }
+        },
+        "internal-link-juicer": {
+            "\/ilj\/v1\/linkindex": {
+                "status": 404,
+                "available": false
+            }
+        },
+        "internal-links-manager": {
+            "\/internal-links-manager\/v1\/links": {
+                "status": 404,
+                "available": false
+            }
+        }
+    }
+}

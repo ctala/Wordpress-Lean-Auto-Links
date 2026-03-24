@@ -1,0 +1,34 @@
+# Dependencies
+plugin/vendor/
+
+# Docker data
+data/mysql/
+data/uploads/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Node (if ever needed)
+node_modules/
+
+# Composer lock (for plugins, we commit it; uncomment if you don't want to)
+# plugin/composer.lock
+
+# WordPress
+wp-content/
+*.log
+
+# Claude
+.claude/
