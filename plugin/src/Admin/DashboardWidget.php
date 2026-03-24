@@ -148,6 +148,40 @@ final class DashboardWidget
                 color: #d63638;
                 font-weight: 600;
             }
+            .lal-type-badge {
+                display: inline-block;
+                padding: 1px 6px;
+                border-radius: 3px;
+                font-size: 10px;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 0.3px;
+                margin-right: 4px;
+            }
+            .lal-type-internal { background: #edfaef; color: #00a32a; }
+            .lal-type-entity { background: #e7f2fa; color: #0073aa; }
+            .lal-type-affiliate { background: #fef8e7; color: #996800; }
+            .lal-recent-list { margin: 6px 0 0; padding: 0; list-style: none; }
+            .lal-recent-list li {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 3px 0;
+                font-size: 12px;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            .lal-recent-list li:last-child { border-bottom: none; }
+            .lal-recent-list .lal-post-link {
+                flex: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .lal-recent-list .lal-time {
+                color: #646970;
+                font-size: 11px;
+                white-space: nowrap;
+            }
         </style>
 
         <div class="lal-dashboard-grid">
@@ -161,17 +195,17 @@ final class DashboardWidget
                     ?></span>
                 </div>
                 <div class="lal-detail">
-                    <span><?php
+                    <span class="lal-type-badge lal-type-internal"><?php
                         /* translators: %d: number of internal rules */
-                        echo esc_html(sprintf(__('Internal: %d', 'leanautolinks'), $internal_rules));
+                        echo esc_html(sprintf(__('Internal %d', 'leanautolinks'), $internal_rules));
                     ?></span>
-                    <span><?php
+                    <span class="lal-type-badge lal-type-entity"><?php
                         /* translators: %d: number of entity rules */
-                        echo esc_html(sprintf(__('Entity: %d', 'leanautolinks'), $entity_rules));
+                        echo esc_html(sprintf(__('Entity %d', 'leanautolinks'), $entity_rules));
                     ?></span>
-                    <span><?php
+                    <span class="lal-type-badge lal-type-affiliate"><?php
                         /* translators: %d: number of affiliate rules */
-                        echo esc_html(sprintf(__('Affiliate: %d', 'leanautolinks'), $affiliate_rules));
+                        echo esc_html(sprintf(__('Affiliate %d', 'leanautolinks'), $affiliate_rules));
                     ?></span>
                 </div>
             </div>

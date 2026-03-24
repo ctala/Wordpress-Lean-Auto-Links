@@ -182,7 +182,7 @@ final class QueueController extends RestController
             as_schedule_single_action(
                 time(),
                 'leanautolinks_process_batch',
-                ['triggered_by' => 'bulk_reprocess'],
+                [['triggered_by' => 'bulk_reprocess']],
                 'leanautolinks'
             );
         }
@@ -218,7 +218,7 @@ final class QueueController extends RestController
             as_schedule_single_action(
                 time(),
                 'leanautolinks_process_batch',
-                ['triggered_by' => 'retry_failed'],
+                [['triggered_by' => 'retry_failed']],
                 'leanautolinks'
             );
         }

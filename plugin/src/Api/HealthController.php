@@ -94,6 +94,12 @@ final class HealthController extends RestController
         // Action Scheduler availability.
         $has_action_scheduler = function_exists('as_enqueue_async_action');
 
+        // WP-Cron health: warn if using HTTP-based cron on cached sites.
+        $wp_cron_disabled = defined('DISABLE_WP_CRON') && DISABLE_WP_CRON;
+        if (!$wp_cron_disabled && $queue_stats['pending'] > 0) {
+            $issues[] = __('WP-Cron relies on site traffic. For reliable queue processing, add a system cron job and set DISABLE_WP_CRON to true.', 'leanautolinks');
+        }
+
         return new \WP_REST_Response([
             'status'         => $status,
             'issues'         => $issues,

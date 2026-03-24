@@ -288,6 +288,11 @@ final class AdminPage
                         <?php echo esc_html__('Tip: Install Redis or Memcached for better performance.', 'leanautolinks'); ?>
                     </p>
                 <?php endif; ?>
+                <?php if (!(defined('DISABLE_WP_CRON') && DISABLE_WP_CRON) && $pending > 0) : ?>
+                    <p class="lw-notice-text">
+                        <?php echo esc_html__('Tip: For reliable queue processing, add a system cron and set DISABLE_WP_CRON to true in wp-config.php.', 'leanautolinks'); ?>
+                    </p>
+                <?php endif; ?>
             </div>
 
             <!-- Rules -->
@@ -379,7 +384,15 @@ final class AdminPage
                         <?php foreach ($recent_log as $entry) : ?>
                             <tr>
                                 <td><span class="lw-badge"><?php echo esc_html($entry->event_type); ?></span></td>
-                                <td><?php echo esc_html((string) ($entry->post_id ?: '-')); ?></td>
+                                <td>
+                                    <?php if (!empty($entry->post_id)) : ?>
+                                        <a href="<?php echo esc_url(get_permalink((int) $entry->post_id) ?: '#'); ?>" target="_blank" rel="noopener">
+                                            #<?php echo esc_html((string) $entry->post_id); ?>
+                                        </a>
+                                    <?php else : ?>
+                                        -
+                                    <?php endif; ?>
+                                </td>
                                 <td><?php echo esc_html((string) $entry->duration_ms); ?>ms</td>
                                 <td><?php echo esc_html((string) $entry->links_applied); ?></td>
                                 <td><?php echo esc_html($entry->logged_at); ?></td>
@@ -403,9 +416,13 @@ final class AdminPage
                             <tr>
                                 <td>
                                     <?php if (!empty($q->post_title)) : ?>
-                                        <?php echo esc_html(mb_strimwidth($q->post_title, 0, 50, '...')); ?>
+                                        <a href="<?php echo esc_url(get_permalink((int) $q->post_id) ?: '#'); ?>" target="_blank" rel="noopener">
+                                            <?php echo esc_html(mb_strimwidth($q->post_title, 0, 50, '...')); ?>
+                                        </a>
                                     <?php else : ?>
-                                        #<?php echo esc_html((string) $q->post_id); ?>
+                                        <a href="<?php echo esc_url(get_permalink((int) $q->post_id) ?: '#'); ?>" target="_blank" rel="noopener">
+                                            #<?php echo esc_html((string) $q->post_id); ?>
+                                        </a>
                                     <?php endif; ?>
                                 </td>
                                 <td>
@@ -1112,10 +1129,19 @@ final class AdminPage
                 $remaining_posts = $queue_stats['pending'] + $queue_stats['processing'];
                 if ($remaining_posts > 0) :
                     $perf_table = $wpdb->prefix . 'lw_performance_log';
+                    // Try last hour first, then all-time, then use a conservative default.
                     $avg_ms = (float) $wpdb->get_var(
                         "SELECT AVG(duration_ms) FROM {$perf_table} WHERE event_type = 'process_single' AND logged_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR)"
                     );
-                    if ($avg_ms > 0) :
+                    if ($avg_ms <= 0) {
+                        $avg_ms = (float) $wpdb->get_var(
+                            "SELECT AVG(duration_ms) FROM {$perf_table} WHERE event_type = 'process_single'"
+                        );
+                    }
+                    if ($avg_ms <= 0) {
+                        $avg_ms = 100.0; // Conservative default: 100ms per post.
+                    }
+                    if (true) :
                         $batch_size = (int) get_option('leanautolinks_batch_size', 25);
                         $concurrent = (int) get_option('leanautolinks_max_concurrent_jobs', 3);
                         // Estimate: (remaining / batch_size) batches, each taking (batch_size * avg_ms) + 5s scheduling delay
@@ -1233,11 +1259,13 @@ final class AdminPage
                         <tr>
                             <td>
                                 <?php if (!empty($item->post_title)) : ?>
-                                    <a href="<?php echo esc_url(get_edit_post_link((int) $item->post_id) ?: '#'); ?>">
+                                    <a href="<?php echo esc_url(get_permalink((int) $item->post_id) ?: '#'); ?>" target="_blank" rel="noopener">
                                         <?php echo esc_html($item->post_title); ?>
                                     </a>
                                 <?php else : ?>
-                                    #<?php echo esc_html((string) $item->post_id); ?>
+                                    <a href="<?php echo esc_url(get_permalink((int) $item->post_id) ?: '#'); ?>" target="_blank" rel="noopener">
+                                        #<?php echo esc_html((string) $item->post_id); ?>
+                                    </a>
                                 <?php endif; ?>
                             </td>
                             <td>
@@ -1869,7 +1897,7 @@ final class AdminPage
             as_schedule_single_action(
                 time(),
                 'leanautolinks_process_batch',
-                ['triggered_by' => 'bulk_reprocess'],
+                [['triggered_by' => 'bulk_reprocess']],
                 'leanautolinks'
             );
         }
@@ -1896,7 +1924,7 @@ final class AdminPage
             as_schedule_single_action(
                 time(),
                 'leanautolinks_process_batch',
-                ['triggered_by' => 'retry_failed'],
+                [['triggered_by' => 'retry_failed']],
                 'leanautolinks'
             );
         }

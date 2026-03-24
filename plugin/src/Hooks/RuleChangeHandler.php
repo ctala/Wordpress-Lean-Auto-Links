@@ -77,7 +77,7 @@ final class RuleChangeHandler
             as_schedule_single_action(
                 time(),
                 'leanautolinks_process_batch',
-                ['triggered_by' => 'rule_change'],
+                [['triggered_by' => 'rule_change']],
                 'leanautolinks'
             );
         }

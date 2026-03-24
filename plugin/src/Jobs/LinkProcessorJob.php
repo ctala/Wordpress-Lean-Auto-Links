@@ -31,8 +31,8 @@ final class LinkProcessorJob
     /** Cache TTL for processed content: 1 hour. */
     private const CACHE_TTL = 3600;
 
-    /** Memory safety threshold in bytes (28MB out of 32MB limit). */
-    private const MEMORY_THRESHOLD = 28 * 1024 * 1024;
+    /** Memory headroom to reserve in bytes (32MB before the PHP limit). */
+    private const MEMORY_HEADROOM = 32 * 1024 * 1024;
 
     /** Maximum retry attempts before giving up. */
     private const MAX_ATTEMPTS = 5;
@@ -105,8 +105,9 @@ final class LinkProcessorJob
         $memory_aborted = false;
 
         foreach ($pending as $queue_item) {
-            // Memory safety check before each post.
-            if (memory_get_usage(true) > self::MEMORY_THRESHOLD) {
+            // Memory safety check: abort if within 32MB of the PHP memory limit.
+            $memory_limit = $this->get_memory_limit();
+            if ($memory_limit > 0 && memory_get_usage(true) > ($memory_limit - self::MEMORY_HEADROOM)) {
                 $memory_aborted = true;
                 break;
             }
@@ -116,19 +117,8 @@ final class LinkProcessorJob
             $processed_count++;
         }
 
-        // Always schedule a continuation if there are more pending posts.
-        if (function_exists('as_schedule_single_action')) {
-            $remaining = $this->queue_repo->get_stats();
-            if (($remaining['pending'] ?? 0) > 0) {
-                $delay = $memory_aborted ? 30 : 5;
-                as_schedule_single_action(
-                    time() + $delay,
-                    'leanautolinks_process_batch',
-                    [$args],
-                    'leanautolinks'
-                );
-            }
-        }
+        // Ensure the recurring batch schedule is active if there are more pending posts.
+        $this->ensure_recurring_schedule();
     }
 
     /**
@@ -298,6 +288,65 @@ final class LinkProcessorJob
      * @param int        $post_id The post ID that failed.
      * @param \Throwable $error   The exception or error that occurred.
      */
+    /** Action Scheduler hook for the recurring batch schedule. */
+    public const RECURRING_HOOK = 'leanautolinks_process_batch_recurring';
+
+    /** Recurring interval in seconds (1 minute). */
+    private const RECURRING_INTERVAL = 60;
+
+    /**
+     * Ensure a recurring AS action is scheduled for batch processing.
+     *
+     * Checks if there are pending posts; if yes, schedules a recurring action
+     * every 60 seconds. If no pending posts remain, unschedules it.
+     */
+    public function ensure_recurring_schedule(): void
+    {
+        if (!function_exists('as_has_scheduled_action') || !function_exists('as_schedule_recurring_action')) {
+            return;
+        }
+
+        $stats = $this->queue_repo->get_stats();
+        $has_pending = ($stats['pending'] ?? 0) > 0;
+
+        $is_scheduled = as_has_scheduled_action(self::RECURRING_HOOK, [], 'leanautolinks');
+
+        if ($has_pending && !$is_scheduled) {
+            as_schedule_recurring_action(
+                time(),
+                self::RECURRING_INTERVAL,
+                self::RECURRING_HOOK,
+                [],
+                'leanautolinks'
+            );
+        } elseif (!$has_pending && $is_scheduled) {
+            as_unschedule_all_actions(self::RECURRING_HOOK, [], 'leanautolinks');
+        }
+    }
+
+    /**
+     * Get the PHP memory limit in bytes.
+     *
+     * Returns 0 if the limit is unlimited (-1).
+     */
+    private function get_memory_limit(): int
+    {
+        $limit = ini_get('memory_limit');
+        if ($limit === '-1' || $limit === false) {
+            return 0;
+        }
+
+        $value = (int) $limit;
+        $unit = strtolower(substr($limit, -1));
+
+        return match ($unit) {
+            'g' => $value * 1024 * 1024 * 1024,
+            'm' => $value * 1024 * 1024,
+            'k' => $value * 1024,
+            default => $value,
+        };
+    }
+
     private function handle_failure(int $post_id, \Throwable $error): void
     {
         $attempts = $this->queue_repo->increment_attempts($post_id);

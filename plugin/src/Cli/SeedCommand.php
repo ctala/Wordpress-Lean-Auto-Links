@@ -159,7 +159,7 @@ final class SeedCommand
             as_schedule_single_action(
                 time(),
                 'leanautolinks_process_batch',
-                ['triggered_by' => 'cli_bulk_reprocess'],
+                [['triggered_by' => 'cli_bulk_reprocess']],
                 'leanautolinks'
             );
         }
