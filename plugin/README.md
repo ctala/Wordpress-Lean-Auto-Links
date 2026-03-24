@@ -2,7 +2,7 @@
 
 > Lean, API-first automated internal linking for high-volume WordPress sites.
 
-![WordPress Plugin Version](https://img.shields.io/badge/WordPress-Plugin_v0.3.1-blue?logo=wordpress)
+![WordPress Plugin Version](https://img.shields.io/badge/WordPress-Plugin_v0.3.2-blue?logo=wordpress)
 ![PHP 8.1+](https://img.shields.io/badge/PHP-8.1%2B-777BB4?logo=php&logoColor=white)
 ![License: GPLv2](https://img.shields.io/badge/License-GPLv2-green.svg)
 

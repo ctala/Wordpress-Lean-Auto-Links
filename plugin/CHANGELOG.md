@@ -5,6 +5,14 @@ All notable changes to the LeanAutoLinks plugin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2026-03-24
+
+### Fixed
+
+- **Critical: Links invisible on frontend with Redis** -- `ContentFilterHandler` disabled the DB fallback when an external object cache (Redis/Memcached) was present. When cached entries expired via TTL, links disappeared entirely from the frontend. DB fallback is now always enabled as a reliable secondary layer.
+- **Critical: Schema not upgraded on plugin update** -- `dbDelta()` only ran on first activation, not on subsequent updates. Uploading a new zip version never added the `processed_content` and `content_hash` columns to `lw_applied_links`, causing all processed content to be lost. Added `maybe_upgrade()` that automatically runs `dbDelta()` when the plugin version changes.
+- **Unique keyword enforcement** -- the same keyword can no longer be used in two different rules. API returns HTTP 409 on duplicates, admin UI shows an error, and bulk import skips duplicates with a warning.
+
 ## [0.3.1] - 2026-03-24
 
 ### Fixed
@@ -100,6 +108,8 @@ Benchmarked against a production-scale dataset from ecosistemastartup.com:
 | Frontend queries added | 0 | 0 |
 | Memory per job | < 32 MB | Within budget |
 
+[0.3.2]: https://github.com/ctala/Lean-Auto-Links/releases/tag/v0.3.2
+[0.3.1]: https://github.com/ctala/Lean-Auto-Links/releases/tag/v0.3.1
 [0.3.0]: https://github.com/ctala/Wordpress-Lean-Auto-Links/releases/tag/v0.3.0
 [0.2.0]: https://github.com/ctala/Wordpress-Lean-Auto-Links/releases/tag/v0.2.0
 [0.1.0]: https://github.com/ctala/Wordpress-Lean-Auto-Links/releases/tag/v0.1.0
