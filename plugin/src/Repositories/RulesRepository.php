@@ -77,6 +77,32 @@ final class RulesRepository
     }
 
     /**
+     * Check if a keyword already exists in another rule.
+     *
+     * @param string   $keyword        The keyword to check.
+     * @param bool     $case_sensitive  Whether to match case-sensitively.
+     * @param int|null $exclude_id      Rule ID to exclude (for updates).
+     * @return ?object The existing rule if found, null otherwise.
+     */
+    public function find_by_keyword(string $keyword, bool $case_sensitive = false, ?int $exclude_id = null): ?object
+    {
+        global $wpdb;
+
+        $collation = $case_sensitive ? 'COLLATE utf8mb4_bin' : '';
+        $exclude   = $exclude_id ? $wpdb->prepare(' AND id != %d', $exclude_id) : '';
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- Safe: table from $wpdb->prefix, collation is hardcoded, exclude is prepared.
+        $result = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM {$this->table} WHERE keyword {$collation} = %s{$exclude} LIMIT 1",
+                $keyword
+            )
+        );
+
+        return $result ?: null;
+    }
+
+    /**
      * Create a new rule and return its ID.
      *
      * @param array<string, mixed> $data Column-value pairs.
