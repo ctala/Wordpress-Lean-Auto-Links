@@ -1,0 +1,2677 @@
+openapi: 3.0.3
+info:
+  title: LeanAutoLinks REST API
+  version: 1.0.0
+  description: |
+    The LeanAutoLinks REST API provides programmatic access to all plugin functionality:
+    managing linking rules, monitoring the background processing queue, viewing applied
+    links and statistics, managing exclusions, and monitoring performance and cache health.
+
+    ## Authentication
+
+    All endpoints require WordPress Application Passwords using HTTP Basic Auth.
+    The authenticated user must have the `manage_options` capability.
+
+    ```bash
+    curl -u "admin:xxxx xxxx xxxx xxxx xxxx xxxx" \
+      https://example.com/wp-json/leanautolinks/v1/rules
+    ```
+
+    Generate an Application Password at **Users > Profile > Application Passwords** in
+    your WordPress admin dashboard.
+
+    ## Pagination
+
+    List endpoints follow WordPress REST API conventions. Use `page` and `per_page`
+    query parameters to paginate results. Responses include the following headers:
+
+    | Header | Description |
+    |--------|-------------|
+    | `X-WP-Total` | Total number of items matching the query |
+    | `X-WP-TotalPages` | Total number of pages |
+
+    ## Error Handling
+
+    All error responses use a consistent JSON structure:
+
+    ```json
+    {
+      "code": "invalid_parameter",
+      "message": "The rule_type parameter must be one of: internal, affiliate, entity.",
+      "data": { "status": 400, "param": "rule_type" }
+    }
+    ```
+
+    ## Rate Limiting
+
+    The API is subject to your server's request handling capacity. No additional
+    rate limiting is applied by the plugin.
+
+    ## Versioning
+
+    This is v1 of the LeanAutoLinks API. The base path is `/wp-json/leanautolinks/v1/`.
+  contact:
+    name: LeanAutoLinks
+    url: https://github.com/leanautolinks/leanautolinks
+  license:
+    name: GPLv2 or later
+    url: https://www.gnu.org/licenses/gpl-2.0.html
+
+servers:
+  - url: /wp-json/leanautolinks/v1
+    description: WordPress REST API namespace
+
+security:
+  - basicAuth: []
+
+tags:
+  - name: Rules
+    description: |
+      Create, read, update, and delete linking rules. Rules define keyword-to-URL
+      mappings that the background engine uses to insert links into post content.
+      Changes to rules trigger reprocessing of affected posts.
+  - name: Queue
+    description: |
+      Monitor and manage the background processing queue. Posts are enqueued
+      automatically on save or when rules change. Use these endpoints to trigger
+      bulk reprocessing, retry failed items, or clear completed entries.
+  - name: Applied Links
+    description: |
+      View links that the engine has inserted into post content, along with
+      aggregated statistics. These are read-only endpoints for reporting and auditing.
+  - name: Exclusions
+    description: |
+      Manage exclusions that prevent LeanAutoLinks from processing specific posts,
+      URLs, keywords, or post types.
+  - name: Performance
+    description: |
+      Access aggregated performance metrics and detailed processing logs.
+      Use these endpoints to monitor engine health and identify bottlenecks.
+  - name: Cache
+    description: |
+      Manage the multi-layer cache system described in ADR-002. Flush caches
+      selectively, trigger cache warming, and view cache statistics.
+  - name: Health
+    description: |
+      System health check that reports queue depth, cache status, and
+      processing statistics in a single response.
+
+paths:
+  # ---------------------------------------------------------------------------
+  # Rules
+  # ---------------------------------------------------------------------------
+  /rules:
+    get:
+      operationId: listRules
+      summary: List all rules
+      description: |
+        Returns a paginated list of linking rules. You can filter by rule type
+        and active status. Results are ordered by priority (ascending), then by
+        creation date (descending).
+      tags: [Rules]
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+        - name: rule_type
+          in: query
+          description: Filter rules by type.
+          required: false
+          schema:
+            $ref: '#/components/schemas/RuleType'
+        - name: is_active
+          in: query
+          description: Filter by active status. Omit to return all rules regardless of status.
+          required: false
+          schema:
+            type: integer
+            enum: [0, 1]
+        - name: search
+          in: query
+          description: Search rules by keyword (partial match).
+          required: false
+          schema:
+            type: string
+        - name: orderby
+          in: query
+          description: Field to order results by.
+          required: false
+          schema:
+            type: string
+            enum: [id, keyword, priority, created_at, updated_at]
+            default: priority
+        - name: order
+          in: query
+          description: Sort direction.
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+      responses:
+        '200':
+          description: A paginated list of rules.
+          headers:
+            X-WP-Total:
+              $ref: '#/components/headers/X-WP-Total'
+            X-WP-TotalPages:
+              $ref: '#/components/headers/X-WP-TotalPages'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Rule'
+              example:
+                - id: 1
+                  rule_type: internal
+                  keyword: inteligencia artificial
+                  target_url: https://example.com/glosario/inteligencia-artificial/
+                  entity_type: glossary
+                  entity_id: 342
+                  priority: 5
+                  max_per_post: 1
+                  case_sensitive: false
+                  is_active: true
+                  nofollow: false
+                  sponsored: false
+                  created_at: "2026-03-20T14:30:00"
+                  updated_at: "2026-03-20T14:30:00"
+                - id: 2
+                  rule_type: affiliate
+                  keyword: Notion
+                  target_url: https://affiliate.example.com/notion?ref=lw
+                  entity_type: null
+                  entity_id: null
+                  priority: 20
+                  max_per_post: 1
+                  case_sensitive: true
+                  is_active: true
+                  nofollow: true
+                  sponsored: true
+                  created_at: "2026-03-21T09:00:00"
+                  updated_at: "2026-03-21T09:00:00"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      operationId: createRule
+      summary: Create a rule
+      description: |
+        Creates a new linking rule. After creation, the engine automatically
+        enqueues affected posts (those containing the keyword) for background
+        reprocessing.
+      tags: [Rules]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleCreate'
+            examples:
+              glossary_rule:
+                summary: Glossary term rule
+                value:
+                  rule_type: internal
+                  keyword: inteligencia artificial
+                  target_url: https://example.com/glosario/inteligencia-artificial/
+                  entity_type: glossary
+                  entity_id: 342
+                  priority: 5
+                  max_per_post: 1
+                  case_sensitive: false
+                  nofollow: false
+                  sponsored: false
+              affiliate_rule:
+                summary: Affiliate product rule
+                value:
+                  rule_type: affiliate
+                  keyword: Notion
+                  target_url: https://affiliate.example.com/notion?ref=lw
+                  priority: 20
+                  max_per_post: 1
+                  case_sensitive: true
+                  nofollow: true
+                  sponsored: true
+              entity_rule:
+                summary: Entity/actor rule
+                value:
+                  rule_type: entity
+                  keyword: Y Combinator
+                  target_url: https://example.com/actores/y-combinator/
+                  entity_type: actor
+                  entity_id: 87
+                  priority: 10
+                  max_per_post: 1
+      responses:
+        '201':
+          description: Rule created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /rules/{id}:
+    parameters:
+      - $ref: '#/components/parameters/RuleId'
+
+    get:
+      operationId: getRule
+      summary: Get a single rule
+      description: Returns the full details of a specific rule by its ID.
+      tags: [Rules]
+      responses:
+        '200':
+          description: The requested rule.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      operationId: updateRule
+      summary: Update a rule
+      description: |
+        Updates an existing rule. All mutable fields can be updated. After
+        the update, the engine enqueues affected posts for reprocessing. This
+        includes posts previously linked by the old keyword and posts matching
+        the new keyword.
+      tags: [Rules]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleUpdate'
+            example:
+              keyword: inteligencia artificial generativa
+              target_url: https://example.com/glosario/ia-generativa/
+              priority: 3
+      responses:
+        '200':
+          description: Rule updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      operationId: deleteRule
+      summary: Delete a rule
+      description: |
+        Permanently deletes a rule. All applied links from this rule are removed
+        from the `lw_applied_links` table, and previously linked posts are
+        enqueued for reprocessing to remove the links from cached content.
+      tags: [Rules]
+      responses:
+        '200':
+          description: Rule deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted:
+                    type: boolean
+                    example: true
+                  previous:
+                    $ref: '#/components/schemas/Rule'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /rules/{id}/toggle:
+    parameters:
+      - $ref: '#/components/parameters/RuleId'
+
+    patch:
+      operationId: toggleRule
+      summary: Toggle rule active/inactive
+      description: |
+        Flips the `is_active` status of a rule. If the rule was active, it
+        becomes inactive (and vice versa). Toggling triggers the same
+        reprocessing pipeline as a rule update: affected posts are enqueued
+        for background reprocessing.
+      tags: [Rules]
+      responses:
+        '200':
+          description: Rule toggled successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+              example:
+                id: 1
+                rule_type: internal
+                keyword: inteligencia artificial
+                target_url: https://example.com/glosario/inteligencia-artificial/
+                entity_type: glossary
+                entity_id: 342
+                priority: 5
+                max_per_post: 1
+                case_sensitive: false
+                is_active: false
+                nofollow: false
+                sponsored: false
+                created_at: "2026-03-20T14:30:00"
+                updated_at: "2026-03-24T11:00:00"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /rules/import:
+    post:
+      operationId: importRules
+      summary: Bulk import rules
+      description: |
+        Import multiple rules at once from a JSON array or CSV file. Each rule
+        in the payload is validated individually. Successfully imported rules
+        trigger reprocessing of affected posts. The response includes counts
+        of created, skipped (duplicate keyword), and failed entries.
+      tags: [Rules]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rules]
+              properties:
+                rules:
+                  type: array
+                  description: Array of rule objects to import.
+                  minItems: 1
+                  maxItems: 5000
+                  items:
+                    $ref: '#/components/schemas/RuleCreate'
+                skip_duplicates:
+                  type: boolean
+                  description: |
+                    When true, rules with a keyword that already exists are
+                    silently skipped. When false, duplicate keywords cause
+                    a validation error for that entry.
+                  default: true
+            example:
+              skip_duplicates: true
+              rules:
+                - rule_type: internal
+                  keyword: machine learning
+                  target_url: https://example.com/glosario/machine-learning/
+                  priority: 5
+                - rule_type: entity
+                  keyword: Sequoia Capital
+                  target_url: https://example.com/actores/sequoia-capital/
+                  entity_type: actor
+                  entity_id: 112
+                  priority: 10
+          text/csv:
+            schema:
+              type: string
+              description: |
+                CSV file with headers matching rule fields. Required columns:
+                `rule_type`, `keyword`, `target_url`. Optional columns:
+                `entity_type`, `entity_id`, `priority`, `max_per_post`,
+                `case_sensitive`, `nofollow`, `sponsored`.
+              example: |
+                rule_type,keyword,target_url,priority,max_per_post,nofollow,sponsored
+                internal,machine learning,https://example.com/glosario/machine-learning/,5,1,0,0
+                affiliate,Notion,https://affiliate.example.com/notion?ref=lw,20,1,1,1
+      responses:
+        '200':
+          description: Import completed. Check the counts for details.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  created:
+                    type: integer
+                    description: Number of rules successfully created.
+                    example: 48
+                  skipped:
+                    type: integer
+                    description: Number of rules skipped due to duplicate keywords.
+                    example: 2
+                  failed:
+                    type: integer
+                    description: Number of rules that failed validation.
+                    example: 0
+                  errors:
+                    type: array
+                    description: Validation error details for failed entries.
+                    items:
+                      type: object
+                      properties:
+                        index:
+                          type: integer
+                          description: Zero-based index of the failed entry in the input array.
+                        keyword:
+                          type: string
+                          description: The keyword of the failed entry (if parseable).
+                        message:
+                          type: string
+                          description: Human-readable error message.
+                    example: []
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ---------------------------------------------------------------------------
+  # Queue
+  # ---------------------------------------------------------------------------
+  /queue:
+    get:
+      operationId: listQueue
+      summary: List queue items
+      description: |
+        Returns a paginated list of items in the processing queue. Use the
+        `status` filter to view only pending, processing, done, or failed items.
+        Results are ordered by scheduled time (ascending), so higher-priority
+        items appear first.
+      tags: [Queue]
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+        - name: status
+          in: query
+          description: Filter by queue item status.
+          required: false
+          schema:
+            $ref: '#/components/schemas/QueueStatus'
+        - name: triggered_by
+          in: query
+          description: Filter by the event that triggered the queue entry.
+          required: false
+          schema:
+            type: string
+            enum: [save_post, rule_change, bulk_reprocess, manual]
+        - name: orderby
+          in: query
+          description: Field to order results by.
+          required: false
+          schema:
+            type: string
+            enum: [id, post_id, status, scheduled_at, processed_at]
+            default: scheduled_at
+        - name: order
+          in: query
+          description: Sort direction.
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+      responses:
+        '200':
+          description: A paginated list of queue items.
+          headers:
+            X-WP-Total:
+              $ref: '#/components/headers/X-WP-Total'
+            X-WP-TotalPages:
+              $ref: '#/components/headers/X-WP-TotalPages'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/QueueItem'
+              example:
+                - id: 501
+                  post_id: 8234
+                  status: pending
+                  triggered_by: save_post
+                  attempts: 0
+                  scheduled_at: "2026-03-24T10:15:00"
+                  processed_at: null
+                  error_log: null
+                - id: 499
+                  post_id: 7012
+                  status: done
+                  triggered_by: rule_change
+                  attempts: 1
+                  scheduled_at: "2026-03-24T10:10:00"
+                  processed_at: "2026-03-24T10:10:03"
+                  error_log: null
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /queue/bulk:
+    post:
+      operationId: triggerBulkReprocess
+      summary: Trigger bulk reprocessing
+      description: |
+        Enqueues posts for background reprocessing. You can reprocess all
+        published posts, filter by post type, or specify a date range. Bulk
+        jobs run at the lowest priority (50) so they do not block processing
+        of newly published or updated posts.
+
+        This operation is idempotent: posts already in the queue with a
+        `pending` or `processing` status are not re-enqueued.
+      tags: [Queue]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [filter]
+              properties:
+                filter:
+                  type: string
+                  description: |
+                    The scope of posts to reprocess.
+                    - `all`: All published posts.
+                    - `post_type`: Posts of a specific type (requires `post_type` field).
+                    - `date_range`: Posts within a date range (requires `date_from` and/or `date_to`).
+                  enum: [all, post_type, date_range]
+                post_type:
+                  type: string
+                  description: |
+                    WordPress post type to filter by. Required when `filter` is `post_type`.
+                  example: post
+                date_from:
+                  type: string
+                  format: date
+                  description: |
+                    Start date (inclusive) for the date range filter. Format: `YYYY-MM-DD`.
+                    Required when `filter` is `date_range` (at least one of `date_from` or `date_to`).
+                  example: "2026-01-01"
+                date_to:
+                  type: string
+                  format: date
+                  description: |
+                    End date (inclusive) for the date range filter. Format: `YYYY-MM-DD`.
+                  example: "2026-03-24"
+            examples:
+              all_posts:
+                summary: Reprocess all posts
+                value:
+                  filter: all
+              by_post_type:
+                summary: Reprocess only glossary CPT
+                value:
+                  filter: post_type
+                  post_type: glossary
+              by_date_range:
+                summary: Reprocess posts from last month
+                value:
+                  filter: date_range
+                  date_from: "2026-02-24"
+                  date_to: "2026-03-24"
+      responses:
+        '202':
+          description: Bulk reprocessing enqueued successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enqueued:
+                    type: integer
+                    description: Number of posts enqueued for reprocessing.
+                    example: 15230
+                  estimated_minutes:
+                    type: number
+                    description: Estimated time to complete based on current throughput.
+                    example: 42.3
+                  message:
+                    type: string
+                    example: "15230 posts enqueued for reprocessing at priority 50."
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /queue/retry:
+    post:
+      operationId: retryFailedItems
+      summary: Retry failed queue items
+      description: |
+        Resets all items with `failed` status back to `pending` with their
+        attempt counter reset to 0. These items re-enter the processing queue
+        and are picked up by the next Action Scheduler run.
+      tags: [Queue]
+      responses:
+        '200':
+          description: Failed items re-enqueued.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  retried:
+                    type: integer
+                    description: Number of failed items moved back to pending.
+                    example: 7
+                  message:
+                    type: string
+                    example: "7 failed items re-enqueued for processing."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /queue/clear-done:
+    delete:
+      operationId: clearDoneItems
+      summary: Clear completed queue items
+      description: |
+        Removes all items with `done` status from the queue table. This is a
+        cleanup operation that reduces table size. It does not affect pending,
+        processing, or failed items.
+      tags: [Queue]
+      responses:
+        '200':
+          description: Completed items cleared.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cleared:
+                    type: integer
+                    description: Number of completed items removed from the queue.
+                    example: 14832
+                  message:
+                    type: string
+                    example: "14832 completed items removed from the queue."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /queue/{post_id}:
+    parameters:
+      - name: post_id
+        in: path
+        required: true
+        description: The WordPress post ID to look up in the queue.
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+
+    get:
+      operationId: getQueueItem
+      summary: Get queue status for a specific post
+      description: |
+        Returns the queue entry for a specific WordPress post. If the post
+        has never been enqueued, a 404 is returned. Use this endpoint to
+        check processing status after saving or updating a post.
+      tags: [Queue]
+      responses:
+        '200':
+          description: The queue entry for the specified post.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueueItem'
+              example:
+                id: 501
+                post_id: 8234
+                status: done
+                triggered_by: save_post
+                attempts: 1
+                scheduled_at: "2026-03-24T10:15:00"
+                processed_at: "2026-03-24T10:15:02"
+                error_log: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ---------------------------------------------------------------------------
+  # Applied Links
+  # ---------------------------------------------------------------------------
+  /applied:
+    get:
+      operationId: listAppliedLinks
+      summary: List applied links
+      description: |
+        Returns a paginated list of links that the engine has inserted into
+        post content. You can filter by post ID (to see all links in one post)
+        or by rule ID (to see everywhere a rule has been applied).
+      tags: [Applied Links]
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+        - name: post_id
+          in: query
+          description: Filter by WordPress post ID.
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: rule_id
+          in: query
+          description: Filter by rule ID.
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: orderby
+          in: query
+          description: Field to order results by.
+          required: false
+          schema:
+            type: string
+            enum: [id, post_id, rule_id, applied_at]
+            default: applied_at
+        - name: order
+          in: query
+          description: Sort direction.
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: A paginated list of applied links.
+          headers:
+            X-WP-Total:
+              $ref: '#/components/headers/X-WP-Total'
+            X-WP-TotalPages:
+              $ref: '#/components/headers/X-WP-TotalPages'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppliedLink'
+              example:
+                - id: 10234
+                  post_id: 8234
+                  rule_id: 1
+                  keyword: inteligencia artificial
+                  target_url: https://example.com/glosario/inteligencia-artificial/
+                  applied_at: "2026-03-24T10:15:02"
+                - id: 10235
+                  post_id: 8234
+                  rule_id: 5
+                  keyword: Y Combinator
+                  target_url: https://example.com/actores/y-combinator/
+                  applied_at: "2026-03-24T10:15:02"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /applied/stats:
+    get:
+      operationId: getAppliedStats
+      summary: Get applied link statistics
+      description: |
+        Returns aggregated statistics about applied links: total count,
+        breakdown by rule type, and the posts with the most applied links.
+      tags: [Applied Links]
+      responses:
+        '200':
+          description: Applied link statistics.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppliedStats'
+              example:
+                total_links: 48210
+                by_rule_type:
+                  internal: 28430
+                  entity: 15200
+                  affiliate: 4580
+                posts_with_links: 14320
+                avg_links_per_post: 3.37
+                top_linked_posts:
+                  - post_id: 1204
+                    post_title: "Guia completa de inteligencia artificial para startups"
+                    link_count: 12
+                  - post_id: 3892
+                    post_title: "El ecosistema de venture capital en Latinoamerica"
+                    link_count: 11
+                  - post_id: 5017
+                    post_title: "Herramientas de productividad para emprendedores"
+                    link_count: 10
+                top_rules:
+                  - rule_id: 1
+                    keyword: inteligencia artificial
+                    applied_count: 4230
+                  - rule_id: 15
+                    keyword: startup
+                    applied_count: 3890
+                  - rule_id: 42
+                    keyword: venture capital
+                    applied_count: 2105
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ---------------------------------------------------------------------------
+  # Exclusions
+  # ---------------------------------------------------------------------------
+  /exclusions:
+    get:
+      operationId: listExclusions
+      summary: List all exclusions
+      description: |
+        Returns all exclusions. Exclusions prevent LeanAutoLinks from processing
+        specific posts, URLs, keywords, or entire post types. This endpoint
+        is not paginated because the exclusion list is expected to be small.
+      tags: [Exclusions]
+      responses:
+        '200':
+          description: List of all exclusions.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Exclusion'
+              example:
+                - id: 1
+                  type: post
+                  value: "1042"
+                  created_at: "2026-03-20T08:00:00"
+                - id: 2
+                  type: url
+                  value: https://example.com/pagina-legal/
+                  created_at: "2026-03-20T08:00:00"
+                - id: 3
+                  type: keyword
+                  value: empresa privada
+                  created_at: "2026-03-21T12:00:00"
+                - id: 4
+                  type: post_type
+                  value: page
+                  created_at: "2026-03-22T09:30:00"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      operationId: createExclusion
+      summary: Create an exclusion
+      description: |
+        Creates a new exclusion. The exclusion takes effect on the next
+        processing run for affected posts.
+
+        Exclusion types:
+        - `post`: Exclude a specific post by ID. The value must be a valid post ID.
+        - `url`: Exclude a target URL. No rule pointing to this URL will be applied.
+        - `keyword`: Exclude a keyword. No rule with this keyword will be matched.
+        - `post_type`: Exclude an entire post type (e.g., `page`).
+      tags: [Exclusions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExclusionCreate'
+            examples:
+              exclude_post:
+                summary: Exclude a specific post
+                value:
+                  type: post
+                  value: "1042"
+              exclude_url:
+                summary: Exclude a target URL
+                value:
+                  type: url
+                  value: https://example.com/pagina-legal/
+              exclude_keyword:
+                summary: Exclude a keyword
+                value:
+                  type: keyword
+                  value: empresa privada
+              exclude_post_type:
+                summary: Exclude a post type
+                value:
+                  type: post_type
+                  value: page
+      responses:
+        '201':
+          description: Exclusion created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exclusion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /exclusions/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: The exclusion ID.
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+
+    delete:
+      operationId: deleteExclusion
+      summary: Delete an exclusion
+      description: |
+        Removes an exclusion. Posts or keywords that were previously excluded
+        will be eligible for link processing on the next run.
+      tags: [Exclusions]
+      responses:
+        '200':
+          description: Exclusion deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted:
+                    type: boolean
+                    example: true
+                  previous:
+                    $ref: '#/components/schemas/Exclusion'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ---------------------------------------------------------------------------
+  # Performance
+  # ---------------------------------------------------------------------------
+  /performance/summary:
+    get:
+      operationId: getPerformanceSummary
+      summary: Get aggregated performance metrics
+      description: |
+        Returns aggregated performance metrics including average processing
+        time per post, cache hit rate, queue depth, and throughput statistics.
+        Metrics are computed over the last 24 hours by default, configurable
+        via the `period` parameter.
+      tags: [Performance]
+      parameters:
+        - name: period
+          in: query
+          description: |
+            Time period for metric aggregation. Accepted values: `1h`, `6h`,
+            `24h`, `7d`, `30d`.
+          required: false
+          schema:
+            type: string
+            enum: ["1h", "6h", "24h", "7d", "30d"]
+            default: "24h"
+      responses:
+        '200':
+          description: Aggregated performance metrics.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceSummary'
+              example:
+                period: "24h"
+                processing:
+                  total_posts_processed: 1420
+                  avg_duration_ms: 187.4
+                  p95_duration_ms: 432.0
+                  max_duration_ms: 890.0
+                  avg_rules_checked: 1024
+                  avg_links_applied: 3.2
+                  avg_memory_kb: 8420
+                  max_memory_kb: 24100
+                cache:
+                  hit_rate: 0.94
+                  hits: 45230
+                  misses: 2870
+                  estimated_memory_mb: 148.5
+                queue:
+                  pending: 12
+                  processing: 3
+                  done: 14832
+                  failed: 2
+                  estimated_drain_seconds: 45
+                throughput:
+                  posts_per_minute: 14.8
+                  sustained_posts_per_hour: 888
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /performance/log:
+    get:
+      operationId: getPerformanceLog
+      summary: Get detailed performance log
+      description: |
+        Returns individual performance log entries. Each entry represents a
+        single processing event (one post processed) with detailed timing,
+        memory, and result metrics.
+      tags: [Performance]
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+        - name: event_type
+          in: query
+          description: Filter by event type.
+          required: false
+          schema:
+            type: string
+            enum:
+              - process_post
+              - process_failed
+              - cache_hit
+              - cache_miss
+              - cache_flush
+              - cache_warm
+              - bulk_start
+              - bulk_complete
+        - name: post_id
+          in: query
+          description: Filter log entries for a specific post.
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: date_from
+          in: query
+          description: Start date filter (inclusive). Format `YYYY-MM-DD` or ISO 8601.
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: date_to
+          in: query
+          description: End date filter (inclusive). Format `YYYY-MM-DD` or ISO 8601.
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: orderby
+          in: query
+          description: Field to order results by.
+          required: false
+          schema:
+            type: string
+            enum: [id, event_type, post_id, duration_ms, logged_at]
+            default: logged_at
+        - name: order
+          in: query
+          description: Sort direction.
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: A paginated list of performance log entries.
+          headers:
+            X-WP-Total:
+              $ref: '#/components/headers/X-WP-Total'
+            X-WP-TotalPages:
+              $ref: '#/components/headers/X-WP-TotalPages'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PerformanceLogEntry'
+              example:
+                - id: 89201
+                  event_type: process_post
+                  post_id: 8234
+                  duration_ms: 210
+                  memory_kb: 9400
+                  rules_checked: 1024
+                  links_applied: 4
+                  logged_at: "2026-03-24T10:15:02"
+                - id: 89200
+                  event_type: process_post
+                  post_id: 7012
+                  duration_ms: 145
+                  memory_kb: 7800
+                  rules_checked: 1024
+                  links_applied: 2
+                  logged_at: "2026-03-24T10:14:58"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ---------------------------------------------------------------------------
+  # Cache
+  # ---------------------------------------------------------------------------
+  /cache/flush:
+    post:
+      operationId: flushAllCaches
+      summary: Flush all caches
+      description: |
+        Flushes all LeanAutoLinks caches: processed content, rules, keyword index,
+        and statistics counters. After flushing, the cache warming strategy
+        (ADR-002, section 6) activates automatically to repopulate the cache
+        for recently visited posts.
+
+        This operation is equivalent to `wp leanautolinks cache flush`.
+      tags: [Cache]
+      responses:
+        '200':
+          description: All caches flushed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacheFlushResult'
+              example:
+                flushed: true
+                scope: all
+                warming_triggered: true
+                message: "All LeanAutoLinks caches flushed. Cache warming started for recently visited posts."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /cache/flush/content:
+    post:
+      operationId: flushContentCache
+      summary: Flush content cache only
+      description: |
+        Flushes all processed content caches (`lw_processed:*` and `lw_meta:*`
+        keys) while keeping the rules cache intact. Use this when you suspect
+        stale content but rules have not changed.
+      tags: [Cache]
+      responses:
+        '200':
+          description: Content cache flushed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacheFlushResult'
+              example:
+                flushed: true
+                scope: content
+                warming_triggered: true
+                message: "Content cache flushed. Rules cache preserved. Cache warming started."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /cache/flush/rules:
+    post:
+      operationId: flushRulesCache
+      summary: Flush rules cache only
+      description: |
+        Flushes the rules cache (`lw_rules_active`, `lw_rules:{type}`, and
+        `lw_rule_index` keys). The rules are recompiled from the database on
+        the next access. Processed content caches remain intact but may become
+        stale if rules have changed (version-based invalidation handles this
+        automatically).
+      tags: [Cache]
+      responses:
+        '200':
+          description: Rules cache flushed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacheFlushResult'
+              example:
+                flushed: true
+                scope: rules
+                warming_triggered: false
+                message: "Rules cache flushed. Rules will be recompiled on next access."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /cache/warm:
+    post:
+      operationId: triggerCacheWarming
+      summary: Trigger cache warming
+      description: |
+        Triggers the cache warming strategy described in ADR-002, section 6.
+        This enqueues recently visited posts (Tier 1) for immediate warming,
+        followed by recent posts (Tier 2) on a staggered schedule. Older
+        posts (Tier 3) are warmed passively on the next visitor request.
+      tags: [Cache]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                count:
+                  type: integer
+                  description: Maximum number of posts to warm. Defaults to 500.
+                  default: 500
+                  minimum: 1
+                  maximum: 5000
+            example:
+              count: 500
+      responses:
+        '202':
+          description: Cache warming enqueued.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  warming_started:
+                    type: boolean
+                    example: true
+                  tier1_posts:
+                    type: integer
+                    description: Number of recently visited posts queued for immediate warming.
+                    example: 87
+                  tier2_posts:
+                    type: integer
+                    description: Number of recent posts queued for staggered warming.
+                    example: 413
+                  estimated_minutes:
+                    type: number
+                    description: Estimated time to complete warming.
+                    example: 12.5
+                  message:
+                    type: string
+                    example: "Cache warming started: 87 posts (immediate) + 413 posts (staggered)."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /cache/stats:
+    get:
+      operationId: getCacheStats
+      summary: Get cache statistics
+      description: |
+        Returns detailed cache statistics including hit/miss rates, memory
+        usage estimates, backend type, and per-key-type breakdowns.
+      tags: [Cache]
+      responses:
+        '200':
+          description: Cache statistics.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacheStats'
+              example:
+                backend: redis
+                available: true
+                hit_rate: 0.94
+                hits_24h: 45230
+                misses_24h: 2870
+                estimated_memory_mb: 148.5
+                rules_version: 42
+                sentinel_age_seconds: 86400
+                keys:
+                  processed_content: 14320
+                  metadata: 14320
+                  rules: 4
+                  index: 1
+                ttl:
+                  internal: 86400
+                  entity: 86400
+                  affiliate: 43200
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /cache/status/{post_id}:
+    parameters:
+      - name: post_id
+        in: path
+        required: true
+        description: The WordPress post ID to check cache status for.
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+
+    get:
+      operationId: getPostCacheStatus
+      summary: Get per-post cache status
+      description: |
+        Returns the cache status for a specific post, including whether the
+        processed content is cached, the cache version, content hash, and TTL
+        remaining.
+      tags: [Cache]
+      responses:
+        '200':
+          description: Cache status for the specified post.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  post_id:
+                    type: integer
+                    format: int64
+                    example: 8234
+                  cached:
+                    type: boolean
+                    description: Whether processed content exists in the object cache.
+                    example: true
+                  version_current:
+                    type: boolean
+                    description: Whether the cached version matches the current rules version.
+                    example: true
+                  rules_version_cached:
+                    type: integer
+                    description: The rules version at the time the content was processed.
+                    example: 42
+                  rules_version_current:
+                    type: integer
+                    description: The current rules version counter.
+                    example: 42
+                  content_hash:
+                    type: string
+                    description: MD5 hash of the original post content at processing time.
+                    example: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"
+                  content_hash_current:
+                    type: string
+                    description: MD5 hash of the current post content.
+                    example: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"
+                  content_stale:
+                    type: boolean
+                    description: Whether the post content has changed since last processing.
+                    example: false
+                  processed_at:
+                    type: string
+                    format: date-time
+                    description: When the content was last processed.
+                    example: "2026-03-24T10:15:02Z"
+                  links_applied:
+                    type: integer
+                    description: Number of links applied to this post.
+                    example: 4
+                  db_fallback_available:
+                    type: boolean
+                    description: Whether processed content is stored in the database fallback layer.
+                    example: true
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ---------------------------------------------------------------------------
+  # Health
+  # ---------------------------------------------------------------------------
+  /health:
+    get:
+      operationId: getHealth
+      summary: System health check
+      description: |
+        Returns a comprehensive health status covering cache availability,
+        queue depth, and processing statistics. This endpoint is designed for
+        monitoring dashboards and alerting systems. The response includes
+        the overall status (`healthy`, `degraded`, or `critical`) along with
+        detailed sub-component statuses.
+
+        Status thresholds:
+        - `healthy`: Cache available, hit rate >= 80%, queue depth < 5,000, no failed jobs.
+        - `degraded`: Cache hit rate < 80%, OR queue depth between 5,000 and 20,000, OR failed jobs > 0.
+        - `critical`: Cache unavailable, OR queue depth > 20,000, OR failed jobs > 50 in 24 hours.
+      tags: [Health]
+      responses:
+        '200':
+          description: System health status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+              example:
+                status: healthy
+                version: "1.0.0"
+                timestamp: "2026-03-24T10:30:00Z"
+                cache:
+                  backend: redis
+                  available: true
+                  hit_rate: 0.94
+                  hits_24h: 45230
+                  misses_24h: 2870
+                  estimated_memory_mb: 148.5
+                  rules_version: 42
+                  sentinel_age_seconds: 86400
+                fallback:
+                  active: false
+                  posts_with_db_content: 15000
+                queue:
+                  pending: 12
+                  processing: 3
+                  done: 14832
+                  failed: 0
+                  estimated_drain_seconds: 45
+                processing:
+                  avg_duration_ms: 187.4
+                  p95_duration_ms: 432.0
+                  posts_processed_24h: 1420
+                  throughput_posts_per_minute: 14.8
+                rules:
+                  total: 1024
+                  active: 980
+                  by_type:
+                    internal: 510
+                    entity: 420
+                    affiliate: 50
+                applied_links:
+                  total: 48210
+                  posts_with_links: 14320
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+# =============================================================================
+# Components
+# =============================================================================
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: |
+        WordPress Application Passwords. The username is your WordPress
+        username and the password is an Application Password generated at
+        **Users > Profile > Application Passwords**.
+
+  # ---------------------------------------------------------------------------
+  # Parameters
+  # ---------------------------------------------------------------------------
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: Current page of the collection.
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    PerPageParam:
+      name: per_page
+      in: query
+      description: Maximum number of items to return per page.
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+    RuleId:
+      name: id
+      in: path
+      required: true
+      description: The rule ID.
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+
+  # ---------------------------------------------------------------------------
+  # Headers
+  # ---------------------------------------------------------------------------
+  headers:
+    X-WP-Total:
+      description: Total number of items in the collection.
+      schema:
+        type: integer
+    X-WP-TotalPages:
+      description: Total number of pages in the collection.
+      schema:
+        type: integer
+
+  # ---------------------------------------------------------------------------
+  # Schemas
+  # ---------------------------------------------------------------------------
+  schemas:
+    # --- Enums ---------------------------------------------------------------
+    RuleType:
+      type: string
+      enum: [internal, affiliate, entity]
+      description: |
+        The type of linking rule:
+        - `internal`: Glossary terms and internal content links (TTL: 24h).
+        - `affiliate`: Affiliate product/service links with `rel="sponsored nofollow"` (TTL: 12h).
+        - `entity`: Entity/actor links for companies, VCs, and people (TTL: 24h).
+
+    QueueStatus:
+      type: string
+      enum: [pending, processing, done, failed]
+      description: |
+        The processing status of a queue item:
+        - `pending`: Waiting to be picked up by Action Scheduler.
+        - `processing`: Currently being processed by a background worker.
+        - `done`: Successfully processed and cached.
+        - `failed`: Processing failed after maximum retry attempts (5).
+
+    ExclusionType:
+      type: string
+      enum: [post, url, keyword, post_type]
+      description: |
+        The type of exclusion:
+        - `post`: Exclude a specific post by its ID.
+        - `url`: Exclude a target URL from being linked to.
+        - `keyword`: Exclude a keyword from being matched.
+        - `post_type`: Exclude an entire WordPress post type.
+
+    # --- Rule ----------------------------------------------------------------
+    Rule:
+      type: object
+      description: A linking rule that maps a keyword to a target URL.
+      required:
+        - id
+        - rule_type
+        - keyword
+        - target_url
+        - priority
+        - max_per_post
+        - case_sensitive
+        - is_active
+        - nofollow
+        - sponsored
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique rule identifier.
+          readOnly: true
+          example: 1
+        rule_type:
+          $ref: '#/components/schemas/RuleType'
+        keyword:
+          type: string
+          maxLength: 255
+          description: |
+            The keyword or phrase to match in post content. Matched using
+            word-boundary-aware regex (see matching algorithm documentation).
+          example: inteligencia artificial
+        target_url:
+          type: string
+          format: uri
+          description: The URL that the matched keyword links to.
+          example: https://example.com/glosario/inteligencia-artificial/
+        entity_type:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: |
+            The WordPress custom post type associated with this rule (e.g.,
+            `glossary`, `actor`). Null for affiliate rules or rules not tied
+            to a CPT.
+          example: glossary
+        entity_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: |
+            The WordPress post ID of the associated entity. Null for rules
+            not tied to a specific post.
+          example: 342
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 127
+          description: |
+            Processing priority. Lower values are processed first. When
+            multiple rules match overlapping text in the same post, the
+            higher-priority (lower value) rule wins.
+          default: 10
+          example: 5
+        max_per_post:
+          type: integer
+          minimum: 1
+          maximum: 127
+          description: |
+            Maximum number of times this rule can be applied within a single
+            post. Prevents over-linking for high-frequency keywords.
+          default: 1
+          example: 1
+        case_sensitive:
+          type: boolean
+          description: |
+            Whether keyword matching is case-sensitive. Default is false
+            (case-insensitive), which is recommended for most use cases.
+          default: false
+          example: false
+        is_active:
+          type: boolean
+          description: Whether this rule is currently active. Inactive rules are not evaluated by the engine.
+          default: true
+          example: true
+        nofollow:
+          type: boolean
+          description: |
+            Whether to add `rel="nofollow"` to the generated link. Automatically
+            set to true for affiliate rules.
+          default: false
+          example: false
+        sponsored:
+          type: boolean
+          description: |
+            Whether to add `rel="sponsored"` to the generated link. Automatically
+            set to true for affiliate rules. Affiliate links always render as
+            `rel="sponsored nofollow"`.
+          default: false
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: When the rule was created.
+          readOnly: true
+          example: "2026-03-20T14:30:00"
+        updated_at:
+          type: string
+          format: date-time
+          description: When the rule was last updated.
+          readOnly: true
+          example: "2026-03-20T14:30:00"
+
+    RuleCreate:
+      type: object
+      description: Request body for creating a new rule.
+      required:
+        - rule_type
+        - keyword
+        - target_url
+      properties:
+        rule_type:
+          $ref: '#/components/schemas/RuleType'
+        keyword:
+          type: string
+          maxLength: 255
+          minLength: 1
+          description: The keyword or phrase to match in post content.
+        target_url:
+          type: string
+          format: uri
+          description: The URL that the matched keyword links to.
+        entity_type:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: The associated custom post type.
+        entity_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: The associated entity post ID.
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 127
+          default: 10
+        max_per_post:
+          type: integer
+          minimum: 1
+          maximum: 127
+          default: 1
+        case_sensitive:
+          type: boolean
+          default: false
+        nofollow:
+          type: boolean
+          default: false
+        sponsored:
+          type: boolean
+          default: false
+
+    RuleUpdate:
+      type: object
+      description: |
+        Request body for updating a rule. All fields are optional; only
+        provided fields are updated.
+      properties:
+        rule_type:
+          $ref: '#/components/schemas/RuleType'
+        keyword:
+          type: string
+          maxLength: 255
+          minLength: 1
+        target_url:
+          type: string
+          format: uri
+        entity_type:
+          type: string
+          maxLength: 100
+          nullable: true
+        entity_id:
+          type: integer
+          format: int64
+          nullable: true
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 127
+        max_per_post:
+          type: integer
+          minimum: 1
+          maximum: 127
+        case_sensitive:
+          type: boolean
+        is_active:
+          type: boolean
+        nofollow:
+          type: boolean
+        sponsored:
+          type: boolean
+
+    # --- Queue ---------------------------------------------------------------
+    QueueItem:
+      type: object
+      description: An item in the background processing queue.
+      required:
+        - id
+        - post_id
+        - status
+        - triggered_by
+        - attempts
+        - scheduled_at
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique queue entry identifier.
+          readOnly: true
+          example: 501
+        post_id:
+          type: integer
+          format: int64
+          description: The WordPress post ID to be processed.
+          example: 8234
+        status:
+          $ref: '#/components/schemas/QueueStatus'
+        triggered_by:
+          type: string
+          maxLength: 50
+          description: |
+            What triggered this queue entry:
+            - `save_post`: Post was created or updated.
+            - `rule_change`: A rule was created, updated, or deleted.
+            - `bulk_reprocess`: Triggered via the bulk reprocess endpoint.
+            - `manual`: Manually enqueued via admin UI or WP-CLI.
+          enum: [save_post, rule_change, bulk_reprocess, manual]
+          default: save_post
+          example: save_post
+        attempts:
+          type: integer
+          minimum: 0
+          maximum: 5
+          description: |
+            Number of processing attempts. After 5 failed attempts, the item
+            is marked as `failed` and no further retries are scheduled
+            automatically.
+          default: 0
+          example: 0
+        scheduled_at:
+          type: string
+          format: date-time
+          description: When the item was enqueued for processing.
+          example: "2026-03-24T10:15:00"
+        processed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the item was successfully processed. Null if not yet processed.
+          example: null
+        error_log:
+          type: string
+          nullable: true
+          description: Error message from the last failed attempt. Null if no errors.
+          example: null
+
+    # --- Applied Links -------------------------------------------------------
+    AppliedLink:
+      type: object
+      description: A link that was inserted into a post by the engine.
+      required:
+        - id
+        - post_id
+        - rule_id
+        - keyword
+        - target_url
+        - applied_at
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique applied link identifier.
+          readOnly: true
+          example: 10234
+        post_id:
+          type: integer
+          format: int64
+          description: The WordPress post ID where this link was applied.
+          example: 8234
+        rule_id:
+          type: integer
+          format: int64
+          description: The rule ID that generated this link.
+          example: 1
+        keyword:
+          type: string
+          maxLength: 255
+          description: The keyword that was matched and linked.
+          example: inteligencia artificial
+        target_url:
+          type: string
+          format: uri
+          description: The URL the keyword links to.
+          example: https://example.com/glosario/inteligencia-artificial/
+        applied_at:
+          type: string
+          format: date-time
+          description: When this link was applied to the post.
+          example: "2026-03-24T10:15:02"
+
+    AppliedStats:
+      type: object
+      description: Aggregated statistics about applied links across all posts.
+      properties:
+        total_links:
+          type: integer
+          description: Total number of applied links across all posts.
+          example: 48210
+        by_rule_type:
+          type: object
+          description: Link count grouped by rule type.
+          properties:
+            internal:
+              type: integer
+              example: 28430
+            entity:
+              type: integer
+              example: 15200
+            affiliate:
+              type: integer
+              example: 4580
+        posts_with_links:
+          type: integer
+          description: Number of distinct posts that have at least one applied link.
+          example: 14320
+        avg_links_per_post:
+          type: number
+          format: float
+          description: Average number of applied links per post (across posts with links).
+          example: 3.37
+        top_linked_posts:
+          type: array
+          description: Posts with the highest number of applied links (top 10).
+          maxItems: 10
+          items:
+            type: object
+            properties:
+              post_id:
+                type: integer
+                format: int64
+                example: 1204
+              post_title:
+                type: string
+                example: "Guia completa de inteligencia artificial para startups"
+              link_count:
+                type: integer
+                example: 12
+        top_rules:
+          type: array
+          description: Rules with the highest application count (top 10).
+          maxItems: 10
+          items:
+            type: object
+            properties:
+              rule_id:
+                type: integer
+                format: int64
+                example: 1
+              keyword:
+                type: string
+                example: inteligencia artificial
+              applied_count:
+                type: integer
+                example: 4230
+
+    # --- Exclusions ----------------------------------------------------------
+    Exclusion:
+      type: object
+      description: An exclusion that prevents LeanAutoLinks from processing certain content.
+      required:
+        - id
+        - type
+        - value
+        - created_at
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique exclusion identifier.
+          readOnly: true
+          example: 1
+        type:
+          $ref: '#/components/schemas/ExclusionType'
+        value:
+          type: string
+          description: |
+            The exclusion value. Interpretation depends on `type`:
+            - `post`: A WordPress post ID (as a string).
+            - `url`: A full URL.
+            - `keyword`: A keyword string.
+            - `post_type`: A WordPress post type slug.
+          example: "1042"
+        created_at:
+          type: string
+          format: date-time
+          description: When the exclusion was created.
+          readOnly: true
+          example: "2026-03-20T08:00:00"
+
+    ExclusionCreate:
+      type: object
+      description: Request body for creating a new exclusion.
+      required:
+        - type
+        - value
+      properties:
+        type:
+          $ref: '#/components/schemas/ExclusionType'
+        value:
+          type: string
+          minLength: 1
+          description: The exclusion value. See the Exclusion schema for type-specific formats.
+
+    # --- Performance ---------------------------------------------------------
+    PerformanceLogEntry:
+      type: object
+      description: A single entry in the performance log tracking one processing event.
+      required:
+        - id
+        - event_type
+        - logged_at
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique log entry identifier.
+          readOnly: true
+          example: 89201
+        event_type:
+          type: string
+          maxLength: 100
+          description: |
+            The type of event logged:
+            - `process_post`: Successful post processing.
+            - `process_failed`: Failed post processing.
+            - `cache_hit`: Content served from cache on the frontend.
+            - `cache_miss`: Cache miss on the frontend (original content served).
+            - `cache_flush`: Cache flush event.
+            - `cache_warm`: Cache warming event.
+            - `bulk_start`: Bulk reprocess started.
+            - `bulk_complete`: Bulk reprocess completed.
+          example: process_post
+        post_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: The WordPress post ID associated with this event. Null for global events.
+          example: 8234
+        duration_ms:
+          type: integer
+          nullable: true
+          description: Processing duration in milliseconds.
+          example: 210
+        memory_kb:
+          type: integer
+          nullable: true
+          description: Peak memory usage in kilobytes during processing.
+          example: 9400
+        rules_checked:
+          type: integer
+          nullable: true
+          description: Number of rules evaluated during processing.
+          example: 1024
+        links_applied:
+          type: integer
+          nullable: true
+          description: Number of links inserted into the post content.
+          example: 4
+        logged_at:
+          type: string
+          format: date-time
+          description: When this event was logged.
+          example: "2026-03-24T10:15:02"
+
+    PerformanceSummary:
+      type: object
+      description: Aggregated performance metrics over a time period.
+      properties:
+        period:
+          type: string
+          description: The time period these metrics cover.
+          example: "24h"
+        processing:
+          type: object
+          description: Post processing metrics.
+          properties:
+            total_posts_processed:
+              type: integer
+              description: Total posts processed in the period.
+              example: 1420
+            avg_duration_ms:
+              type: number
+              format: float
+              description: Average processing time per post in milliseconds.
+              example: 187.4
+            p95_duration_ms:
+              type: number
+              format: float
+              description: 95th percentile processing time in milliseconds.
+              example: 432.0
+            max_duration_ms:
+              type: number
+              format: float
+              description: Maximum processing time observed in the period.
+              example: 890.0
+            avg_rules_checked:
+              type: integer
+              description: Average number of rules evaluated per post.
+              example: 1024
+            avg_links_applied:
+              type: number
+              format: float
+              description: Average number of links applied per post.
+              example: 3.2
+            avg_memory_kb:
+              type: integer
+              description: Average peak memory usage per post in kilobytes.
+              example: 8420
+            max_memory_kb:
+              type: integer
+              description: Maximum memory usage observed in the period.
+              example: 24100
+        cache:
+          type: object
+          description: Cache performance metrics.
+          properties:
+            hit_rate:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+              description: Cache hit rate as a decimal (0.0 to 1.0).
+              example: 0.94
+            hits:
+              type: integer
+              description: Total cache hits in the period.
+              example: 45230
+            misses:
+              type: integer
+              description: Total cache misses in the period.
+              example: 2870
+            estimated_memory_mb:
+              type: number
+              format: float
+              description: Estimated memory used by LeanAutoLinks in the object cache backend.
+              example: 148.5
+        queue:
+          type: object
+          description: Current queue status (snapshot, not aggregated).
+          properties:
+            pending:
+              type: integer
+              example: 12
+            processing:
+              type: integer
+              example: 3
+            done:
+              type: integer
+              example: 14832
+            failed:
+              type: integer
+              example: 2
+            estimated_drain_seconds:
+              type: integer
+              description: Estimated seconds to process all pending items based on current throughput.
+              example: 45
+        throughput:
+          type: object
+          description: Processing throughput metrics.
+          properties:
+            posts_per_minute:
+              type: number
+              format: float
+              description: Current throughput in posts processed per minute.
+              example: 14.8
+            sustained_posts_per_hour:
+              type: integer
+              description: Sustained throughput extrapolated to posts per hour.
+              example: 888
+
+    # --- Cache ---------------------------------------------------------------
+    CacheStats:
+      type: object
+      description: Detailed cache statistics.
+      properties:
+        backend:
+          type: string
+          description: |
+            The detected object cache backend. Common values: `redis`,
+            `memcached`, `apcu`, `none` (WordPress default in-memory only).
+          example: redis
+        available:
+          type: boolean
+          description: Whether the object cache backend is currently responding.
+          example: true
+        hit_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Cache hit rate over the last 24 hours.
+          example: 0.94
+        hits_24h:
+          type: integer
+          description: Cache hits in the last 24 hours.
+          example: 45230
+        misses_24h:
+          type: integer
+          description: Cache misses in the last 24 hours.
+          example: 2870
+        estimated_memory_mb:
+          type: number
+          format: float
+          description: Estimated memory used by LeanAutoLinks cache keys.
+          example: 148.5
+        rules_version:
+          type: integer
+          description: Current rules version counter. Incremented on any rule CRUD operation.
+          example: 42
+        sentinel_age_seconds:
+          type: integer
+          description: |
+            Seconds since the cache sentinel was last set. A low value after
+            a known flush indicates the warming strategy has activated.
+          example: 86400
+        keys:
+          type: object
+          description: Count of cache keys by category.
+          properties:
+            processed_content:
+              type: integer
+              description: Number of posts with cached processed content.
+              example: 14320
+            metadata:
+              type: integer
+              description: Number of posts with cached metadata.
+              example: 14320
+            rules:
+              type: integer
+              description: Number of rules cache keys (active + per-type).
+              example: 4
+            index:
+              type: integer
+              description: Number of keyword index cache keys.
+              example: 1
+        ttl:
+          type: object
+          description: Current TTL settings by rule type (in seconds).
+          properties:
+            internal:
+              type: integer
+              description: TTL for content processed with internal/glossary rules.
+              example: 86400
+            entity:
+              type: integer
+              description: TTL for content processed with entity rules.
+              example: 86400
+            affiliate:
+              type: integer
+              description: TTL for content processed with affiliate rules.
+              example: 43200
+
+    CacheFlushResult:
+      type: object
+      description: Result of a cache flush operation.
+      properties:
+        flushed:
+          type: boolean
+          description: Whether the flush completed successfully.
+          example: true
+        scope:
+          type: string
+          description: What was flushed.
+          enum: [all, content, rules]
+          example: all
+        warming_triggered:
+          type: boolean
+          description: Whether cache warming was automatically triggered after the flush.
+          example: true
+        message:
+          type: string
+          description: Human-readable summary of the operation.
+          example: "All LeanAutoLinks caches flushed. Cache warming started for recently visited posts."
+
+    # --- Health --------------------------------------------------------------
+    HealthStatus:
+      type: object
+      description: |
+        Comprehensive system health status. The top-level `status` field
+        provides a quick summary: `healthy`, `degraded`, or `critical`.
+      required:
+        - status
+        - version
+        - timestamp
+        - cache
+        - queue
+        - processing
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, critical]
+          description: |
+            Overall system health:
+            - `healthy`: All systems operational, metrics within thresholds.
+            - `degraded`: One or more metrics outside optimal range but functional.
+            - `critical`: A core component is unavailable or severely degraded.
+          example: healthy
+        version:
+          type: string
+          description: The LeanAutoLinks plugin version.
+          example: "1.0.0"
+        timestamp:
+          type: string
+          format: date-time
+          description: When this health check was performed.
+          example: "2026-03-24T10:30:00Z"
+        cache:
+          type: object
+          description: Cache subsystem health.
+          properties:
+            backend:
+              type: string
+              description: Detected cache backend type.
+              example: redis
+            available:
+              type: boolean
+              description: Whether the cache backend is responding.
+              example: true
+            hit_rate:
+              type: number
+              format: float
+              description: Cache hit rate over the last 24 hours.
+              example: 0.94
+            hits_24h:
+              type: integer
+              example: 45230
+            misses_24h:
+              type: integer
+              example: 2870
+            estimated_memory_mb:
+              type: number
+              format: float
+              example: 148.5
+            rules_version:
+              type: integer
+              example: 42
+            sentinel_age_seconds:
+              type: integer
+              example: 86400
+        fallback:
+          type: object
+          description: Database fallback layer status.
+          properties:
+            active:
+              type: boolean
+              description: |
+                Whether the DB fallback is actively serving content (true when
+                no external object cache is available).
+              example: false
+            posts_with_db_content:
+              type: integer
+              description: Number of posts with processed content stored in the database.
+              example: 15000
+        queue:
+          type: object
+          description: Current queue status.
+          properties:
+            pending:
+              type: integer
+              example: 12
+            processing:
+              type: integer
+              example: 3
+            done:
+              type: integer
+              example: 14832
+            failed:
+              type: integer
+              example: 0
+            estimated_drain_seconds:
+              type: integer
+              description: Estimated seconds to process all pending and processing items.
+              example: 45
+        processing:
+          type: object
+          description: Processing engine health metrics (last 24 hours).
+          properties:
+            avg_duration_ms:
+              type: number
+              format: float
+              example: 187.4
+            p95_duration_ms:
+              type: number
+              format: float
+              example: 432.0
+            posts_processed_24h:
+              type: integer
+              example: 1420
+            throughput_posts_per_minute:
+              type: number
+              format: float
+              example: 14.8
+        rules:
+          type: object
+          description: Rules summary.
+          properties:
+            total:
+              type: integer
+              description: Total number of rules in the database.
+              example: 1024
+            active:
+              type: integer
+              description: Number of currently active rules.
+              example: 980
+            by_type:
+              type: object
+              description: Active rule count by type.
+              properties:
+                internal:
+                  type: integer
+                  example: 510
+                entity:
+                  type: integer
+                  example: 420
+                affiliate:
+                  type: integer
+                  example: 50
+        applied_links:
+          type: object
+          description: Applied links summary.
+          properties:
+            total:
+              type: integer
+              description: Total applied links across all posts.
+              example: 48210
+            posts_with_links:
+              type: integer
+              description: Number of posts with at least one applied link.
+              example: 14320
+
+    # --- Error ---------------------------------------------------------------
+    Error:
+      type: object
+      description: |
+        Standard error response following WordPress REST API conventions.
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          description: |
+            Machine-readable error code. Common codes:
+            - `rest_forbidden`: Missing required capability.
+            - `rest_no_route`: Endpoint not found.
+            - `invalid_parameter`: A request parameter failed validation.
+            - `missing_parameter`: A required parameter is missing.
+            - `not_found`: The requested resource does not exist.
+            - `duplicate_keyword`: A rule with this keyword already exists.
+            - `internal_error`: An unexpected server error occurred.
+          example: invalid_parameter
+        message:
+          type: string
+          description: Human-readable error description.
+          example: "The rule_type parameter must be one of: internal, affiliate, entity."
+        data:
+          type: object
+          description: Additional error context.
+          properties:
+            status:
+              type: integer
+              description: The HTTP status code.
+              example: 400
+            param:
+              type: string
+              description: The parameter that caused the error (if applicable).
+              example: rule_type
+            details:
+              type: object
+              description: Additional error details (structure varies by error type).
+
+    # --- Pagination ----------------------------------------------------------
+    Pagination:
+      type: object
+      description: |
+        Pagination metadata. Not returned in the response body; instead,
+        pagination information is conveyed via response headers following
+        WordPress REST API conventions.
+      properties:
+        page:
+          type: integer
+          description: Current page number.
+          minimum: 1
+          example: 1
+        per_page:
+          type: integer
+          description: Items per page.
+          minimum: 1
+          maximum: 100
+          example: 20
+        total:
+          type: integer
+          description: Total number of items matching the query (from `X-WP-Total` header).
+          example: 1024
+        total_pages:
+          type: integer
+          description: Total number of pages (from `X-WP-TotalPages` header).
+          example: 52
+
+  # ---------------------------------------------------------------------------
+  # Responses
+  # ---------------------------------------------------------------------------
+  responses:
+    BadRequest:
+      description: |
+        The request is malformed or contains invalid parameters. Check the
+        `code` and `data.param` fields to identify the issue.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: invalid_parameter
+            message: "The rule_type parameter must be one of: internal, affiliate, entity."
+            data:
+              status: 400
+              param: rule_type
+
+    Unauthorized:
+      description: |
+        Authentication is missing or invalid. Ensure you are sending a valid
+        WordPress Application Password via HTTP Basic Auth.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: rest_not_logged_in
+            message: "You are not currently logged in."
+            data:
+              status: 401
+
+    Forbidden:
+      description: |
+        The authenticated user does not have the `manage_options` capability
+        required to access this endpoint.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: rest_forbidden
+            message: "Sorry, you are not allowed to manage LeanAutoLinks settings."
+            data:
+              status: 403
+
+    NotFound:
+      description: The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: not_found
+            message: "Rule not found."
+            data:
+              status: 404
+
+    UnprocessableEntity:
+      description: |
+        The request body is syntactically valid but contains semantic errors.
+        For example, a required field is missing or a value violates business rules.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: missing_parameter
+            message: "The keyword field is required."
+            data:
+              status: 422
+              param: keyword
+
+    InternalError:
+      description: An unexpected server error occurred. Check the WordPress error log for details.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: internal_error
+            message: "An unexpected error occurred. Please try again later."
+            data:
+              status: 500
