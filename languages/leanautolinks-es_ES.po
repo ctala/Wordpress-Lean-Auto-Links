@@ -1,0 +1,1094 @@
+# Spanish (Spain) translation for LeanAutoLinks.
+# Copyright (C) 2026 LeanAutoLinks
+# This file is distributed under the same license as the LeanAutoLinks package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: LeanAutoLinks 0.1.0\n"
+"Report-Msgid-Bugs-To: https://github.com/ctala/Lean-Auto-Links/issues\n"
+"POT-Creation-Date: 2026-03-24 13:10-0300\n"
+"PO-Revision-Date: 2026-03-24 13:10-0300\n"
+"Last-Translator: LeanAutoLinks Team\n"
+"Language-Team: Spanish <es@li.org>\n"
+"Language: es_ES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: src/Admin/AdminPage.php:64 src/Admin/AdminPage.php:65
+msgid "LeanAutoLinks"
+msgstr "LeanAutoLinks"
+
+#: src/Admin/AdminPage.php:102
+msgid "Are you sure you want to delete this item?"
+msgstr "¿Estás seguro de que deseas eliminar este elemento?"
+
+#: src/Admin/AdminPage.php:103
+msgid "Are you sure you want to reprocess all posts? This may take a while."
+msgstr "¿Estás seguro de que deseas reprocesar todas las entradas? Esto puede tardar un rato."
+
+#: src/Admin/AdminPage.php:104
+msgid "Clear all completed queue items?"
+msgstr "¿Limpiar todos los elementos completados de la cola?"
+
+#: src/Admin/AdminPage.php:105
+msgid "Processing..."
+msgstr "Procesando..."
+
+#: src/Admin/AdminPage.php:106
+msgid "Done!"
+msgstr "¡Listo!"
+
+#: src/Admin/AdminPage.php:107
+msgid "An error occurred. Please try again."
+msgstr "Ocurrió un error. Por favor, inténtalo de nuevo."
+
+#: src/Admin/AdminPage.php:108
+msgid "Saved successfully."
+msgstr "Guardado correctamente."
+
+#: src/Admin/AdminPage.php:109
+msgid "Rules imported successfully."
+msgstr "Reglas importadas correctamente."
+
+#: src/Admin/AdminPage.php:122 src/Admin/KeywordMetaBox.php:255
+#: src/Admin/KeywordMetaBox.php:326 src/Admin/KeywordMetaBox.php:384
+msgid "Permission denied."
+msgstr "Permiso denegado."
+
+#: src/Admin/AdminPage.php:153
+msgid "Unknown action."
+msgstr "Acción desconocida."
+
+#: src/Admin/AdminPage.php:163
+msgid "You do not have sufficient permissions to access this page."
+msgstr "No tienes permisos suficientes para acceder a esta página."
+
+#: src/Admin/AdminPage.php:168
+msgid "Dashboard"
+msgstr "Panel"
+
+#: src/Admin/AdminPage.php:169 src/Admin/AdminPage.php:295
+#: src/Admin/DashboardWidget.php:155
+msgid "Rules"
+msgstr "Reglas"
+
+#: src/Admin/AdminPage.php:170 src/Admin/AdminPage.php:305
+#: src/Admin/DashboardWidget.php:191
+msgid "Queue"
+msgstr "Cola"
+
+#: src/Admin/AdminPage.php:171
+msgid "Exclusions"
+msgstr "Exclusiones"
+
+#: src/Admin/AdminPage.php:172
+msgid "Settings"
+msgstr "Ajustes"
+
+#: src/Admin/AdminPage.php:177
+msgid "LeanAutoLinks - Internal Linking"
+msgstr "LeanAutoLinks - Enlaces internos"
+
+#: src/Admin/AdminPage.php:281
+msgid "System Health"
+msgstr "Estado del sistema"
+
+#: src/Admin/AdminPage.php:288
+msgid "Tip: Install Redis or Memcached for better performance."
+msgstr "Consejo: Instala Redis o Memcached para un mejor rendimiento."
+
+#: src/Admin/AdminPage.php:298
+msgid "active"
+msgstr "activas"
+
+#: src/Admin/AdminPage.php:299
+msgid "inactive"
+msgstr "inactivas"
+
+#: src/Admin/AdminPage.php:308
+msgid "pending"
+msgstr "pendientes"
+
+#: src/Admin/AdminPage.php:309
+msgid "processing"
+msgstr "procesando"
+
+#: src/Admin/AdminPage.php:310
+msgid "done"
+msgstr "completados"
+
+#: src/Admin/AdminPage.php:312
+msgid "failed"
+msgstr "fallidos"
+
+#: src/Admin/AdminPage.php:319 src/Admin/DashboardWidget.php:180
+msgid "Links Applied"
+msgstr "Enlaces aplicados"
+
+#: src/Admin/AdminPage.php:322
+msgid "today"
+msgstr "hoy"
+
+#: src/Admin/AdminPage.php:325
+#, php-format
+msgid "Avg %s per post"
+msgstr "Promedio %s por entrada"
+
+#: src/Admin/AdminPage.php:333
+msgid "Performance (24h)"
+msgstr "Rendimiento (24h)"
+
+#: src/Admin/AdminPage.php:336
+#, php-format
+msgid "Avg processing: %sms"
+msgstr "Procesamiento promedio: %sms"
+
+#: src/Admin/AdminPage.php:341
+#, php-format
+msgid "Events processed: %d"
+msgstr "Eventos procesados: %d"
+
+#: src/Admin/AdminPage.php:349
+msgid "Quick Actions"
+msgstr "Acciones rápidas"
+
+#: src/Admin/AdminPage.php:352
+msgid "Process All Posts"
+msgstr "Procesar todas las entradas"
+
+#: src/Admin/AdminPage.php:355 src/Admin/AdminPage.php:1121
+msgid "Retry Failed"
+msgstr "Reintentar fallidos"
+
+#: src/Admin/AdminPage.php:358 src/Admin/AdminPage.php:1124
+msgid "Clear Completed"
+msgstr "Limpiar completados"
+
+#: src/Admin/AdminPage.php:366
+msgid "Recent Activity"
+msgstr "Actividad reciente"
+
+#: src/Admin/AdminPage.php:371
+msgid "Event"
+msgstr "Evento"
+
+#: src/Admin/AdminPage.php:372 src/Admin/AdminPage.php:1318
+msgid "Post ID"
+msgstr "ID de entrada"
+
+#: src/Admin/AdminPage.php:373
+msgid "Duration"
+msgstr "Duración"
+
+#: src/Admin/AdminPage.php:374 src/Admin/AdminPage.php:937
+msgid "Links"
+msgstr "Enlaces"
+
+#: src/Admin/AdminPage.php:375
+msgid "Time"
+msgstr "Hora"
+
+#: src/Admin/AdminPage.php:394 src/Admin/AdminPage.php:1179
+msgid "Post"
+msgstr "Entrada"
+
+#: src/Admin/AdminPage.php:395 src/Admin/AdminPage.php:936
+#: src/Admin/AdminPage.php:1180
+msgid "Status"
+msgstr "Estado"
+
+#: src/Admin/AdminPage.php:396 src/Admin/AdminPage.php:1181
+msgid "Triggered By"
+msgstr "Disparado por"
+
+#: src/Admin/AdminPage.php:397
+msgid "Scheduled"
+msgstr "Programado"
+
+#: src/Admin/AdminPage.php:398
+msgid "Processed"
+msgstr "Procesado"
+
+#: src/Admin/AdminPage.php:431
+msgid "No activity logged yet. Process some posts to see activity here."
+msgstr "Aún no hay actividad registrada. Procesa algunas entradas para ver la actividad aquí."
+
+#: src/Admin/AdminPage.php:517
+msgid "Add New Rule"
+msgstr "Añadir nueva regla"
+
+#: src/Admin/AdminPage.php:524 src/Admin/AdminPage.php:650
+#: src/Admin/AdminPage.php:714 src/Admin/AdminPage.php:1320
+msgid "Keyword"
+msgstr "Palabra clave"
+
+#: src/Admin/AdminPage.php:528 src/Admin/AdminPage.php:654
+#: src/Admin/AdminPage.php:715
+msgid "Target URL"
+msgstr "URL de destino"
+
+#: src/Admin/AdminPage.php:532 src/Admin/AdminPage.php:660
+#: src/Admin/AdminPage.php:716 src/Admin/AdminPage.php:1316
+#: src/Admin/AdminPage.php:1370
+msgid "Type"
+msgstr "Tipo"
+
+#: src/Admin/AdminPage.php:534 src/Admin/AdminPage.php:597
+#: src/Admin/AdminPage.php:662
+msgid "Internal"
+msgstr "Interno"
+
+#: src/Admin/AdminPage.php:535 src/Admin/AdminPage.php:598
+#: src/Admin/AdminPage.php:663
+msgid "Entity"
+msgstr "Entidad"
+
+#: src/Admin/AdminPage.php:536 src/Admin/AdminPage.php:599
+#: src/Admin/AdminPage.php:664
+msgid "Affiliate"
+msgstr "Afiliado"
+
+#: src/Admin/AdminPage.php:540 src/Admin/AdminPage.php:668
+msgid "Entity Type"
+msgstr "Tipo de entidad"
+
+#: src/Admin/AdminPage.php:542 src/Admin/AdminPage.php:670
+msgid "-- Select --"
+msgstr "-- Seleccionar --"
+
+#: src/Admin/AdminPage.php:543 src/Admin/AdminPage.php:671
+msgid "Glossary"
+msgstr "Glosario"
+
+#: src/Admin/AdminPage.php:544 src/Admin/AdminPage.php:672
+msgid "Company"
+msgstr "Empresa"
+
+#: src/Admin/AdminPage.php:545 src/Admin/AdminPage.php:673
+msgid "VC"
+msgstr "VC"
+
+#: src/Admin/AdminPage.php:546 src/Admin/AdminPage.php:674
+msgid "Person"
+msgstr "Persona"
+
+#: src/Admin/AdminPage.php:552 src/Admin/AdminPage.php:680
+#: src/Admin/AdminPage.php:717 src/Admin/AdminPage.php:1182
+msgid "Priority"
+msgstr "Prioridad"
+
+#: src/Admin/AdminPage.php:556 src/Admin/AdminPage.php:684
+msgid "Max per post"
+msgstr "Máximo por entrada"
+
+#: src/Admin/AdminPage.php:562 src/Admin/AdminPage.php:690
+msgid "Case sensitive"
+msgstr "Distinguir mayúsculas"
+
+#: src/Admin/AdminPage.php:568 src/Admin/AdminPage.php:691
+msgid "Nofollow"
+msgstr "Nofollow"
+
+#: src/Admin/AdminPage.php:572 src/Admin/AdminPage.php:692
+msgid "Sponsored"
+msgstr "Patrocinado"
+
+#: src/Admin/AdminPage.php:579
+msgid "Add Rule"
+msgstr "Añadir regla"
+
+#: src/Admin/AdminPage.php:596
+msgid "All types"
+msgstr "Todos los tipos"
+
+#: src/Admin/AdminPage.php:602 src/Admin/AdminPage.php:1164
+msgid "All statuses"
+msgstr "Todos los estados"
+
+#: src/Admin/AdminPage.php:603 src/Admin/AdminPage.php:720
+msgid "Active"
+msgstr "Activo"
+
+#: src/Admin/AdminPage.php:604
+msgid "Inactive"
+msgstr "Inactivo"
+
+#: src/Admin/AdminPage.php:606
+msgid "Search keyword..."
+msgstr "Buscar palabra clave..."
+
+#: src/Admin/AdminPage.php:607 src/Admin/AdminPage.php:1171
+msgid "Filter"
+msgstr "Filtrar"
+
+#: src/Admin/AdminPage.php:612
+msgid "Import JSON"
+msgstr "Importar JSON"
+
+#: src/Admin/AdminPage.php:615
+msgid "Export JSON"
+msgstr "Exportar JSON"
+
+#: src/Admin/AdminPage.php:624
+msgid "Import Rules"
+msgstr "Importar reglas"
+
+#: src/Admin/AdminPage.php:625
+msgid "Paste a JSON array of rules or upload a JSON file."
+msgstr "Pega un array JSON de reglas o sube un archivo JSON."
+
+#: src/Admin/AdminPage.php:632
+msgid "Import"
+msgstr "Importar"
+
+#: src/Admin/AdminPage.php:635 src/Admin/AdminPage.php:701
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: src/Admin/AdminPage.php:645
+msgid "Edit Rule"
+msgstr "Editar regla"
+
+#: src/Admin/AdminPage.php:698
+msgid "Save Changes"
+msgstr "Guardar cambios"
+
+#: src/Admin/AdminPage.php:718
+msgid "Max/Post"
+msgstr "Máx/Entrada"
+
+#: src/Admin/AdminPage.php:719
+msgid "Linked In"
+msgstr "Enlazado en"
+
+#: src/Admin/AdminPage.php:721 src/Admin/AdminPage.php:939
+#: src/Admin/AdminPage.php:1373
+msgid "Actions"
+msgstr "Acciones"
+
+#: src/Admin/AdminPage.php:727
+msgid "No rules found."
+msgstr "No se encontraron reglas."
+
+#: src/Admin/AdminPage.php:766
+#, php-format
+msgid "%d post"
+msgid_plural "%d posts"
+msgstr[0] "%d entrada"
+msgstr[1] "%d entradas"
+
+#: src/Admin/AdminPage.php:777
+msgid "Active - click to deactivate"
+msgstr "Activo - clic para desactivar"
+
+#: src/Admin/AdminPage.php:777
+msgid "Inactive - click to activate"
+msgstr "Inactivo - clic para activar"
+
+#: src/Admin/AdminPage.php:781
+msgid "On"
+msgstr "Sí"
+
+#: src/Admin/AdminPage.php:781
+msgid "Off"
+msgstr "No"
+
+#: src/Admin/AdminPage.php:795 src/Admin/AdminPage.php:955
+msgid "Edit"
+msgstr "Editar"
+
+#: src/Admin/AdminPage.php:798 src/Admin/AdminPage.php:1389
+msgid "Delete"
+msgstr "Eliminar"
+
+#: src/Admin/AdminPage.php:811
+msgid "Bulk Actions"
+msgstr "Acciones masivas"
+
+#: src/Admin/AdminPage.php:812
+msgid "Delete Selected"
+msgstr "Eliminar seleccionados"
+
+#: src/Admin/AdminPage.php:813
+msgid "Activate Selected"
+msgstr "Activar seleccionados"
+
+#: src/Admin/AdminPage.php:814
+msgid "Deactivate Selected"
+msgstr "Desactivar seleccionados"
+
+#: src/Admin/AdminPage.php:817
+msgid "Apply"
+msgstr "Aplicar"
+
+#: src/Admin/AdminPage.php:826
+#, php-format
+msgid "%d rule"
+msgid_plural "%d rules"
+msgstr[0] "%d regla"
+msgstr[1] "%d reglas"
+
+#: src/Admin/AdminPage.php:842 src/Admin/AdminPage.php:983
+#: src/Admin/AdminPage.php:1250 src/Admin/AdminPage.php:1419
+msgid "of"
+msgstr "de"
+
+#: src/Admin/AdminPage.php:877 src/Api/RulesController.php:162
+#: src/Api/RulesController.php:224 src/Api/RulesController.php:289
+#: src/Api/RulesController.php:307
+msgid "Rule not found."
+msgstr "Regla no encontrada."
+
+#: src/Admin/AdminPage.php:910
+msgid "Back to Rules"
+msgstr "Volver a reglas"
+
+#: src/Admin/AdminPage.php:915
+#, php-format
+msgid "Posts linked by \"%s\""
+msgstr "Entradas enlazadas por \"%s\""
+
+#: src/Admin/AdminPage.php:921
+#, php-format
+msgid "Target: %1$s — %2$d posts linked"
+msgstr "Destino: %1$s — %2$d entradas enlazadas"
+
+#: src/Admin/AdminPage.php:929
+msgid "No posts have been linked with this rule yet."
+msgstr "Aún no se han enlazado entradas con esta regla."
+
+#: src/Admin/AdminPage.php:934
+msgid "Post Title"
+msgstr "Título de la entrada"
+
+#: src/Admin/AdminPage.php:935 src/Admin/AdminPage.php:1321
+msgid "Post Type"
+msgstr "Tipo de entrada"
+
+#: src/Admin/AdminPage.php:938
+msgid "Last Applied"
+msgstr "Última aplicación"
+
+#: src/Admin/AdminPage.php:945
+msgid "(no title)"
+msgstr "(sin título)"
+
+#: src/Admin/AdminPage.php:952
+msgid "View"
+msgstr "Ver"
+
+#: src/Admin/AdminPage.php:969
+#, php-format
+msgid "%s item"
+msgid_plural "%s items"
+msgstr[0] "%s elemento"
+msgstr[1] "%s elementos"
+
+#: src/Admin/AdminPage.php:1055 src/Admin/AdminPage.php:1091
+#: src/Admin/AdminPage.php:1165
+msgid "Pending"
+msgstr "Pendiente"
+
+#: src/Admin/AdminPage.php:1058 src/Admin/AdminPage.php:1083
+#: src/Admin/AdminPage.php:1166 src/Admin/AdminPage.php:1539
+msgid "Processing"
+msgstr "Procesando"
+
+#: src/Admin/AdminPage.php:1061 src/Admin/AdminPage.php:1078
+#: src/Admin/AdminPage.php:1167
+msgid "Done"
+msgstr "Completado"
+
+#: src/Admin/AdminPage.php:1064 src/Admin/AdminPage.php:1087
+#: src/Admin/AdminPage.php:1168
+msgid "Failed"
+msgstr "Fallido"
+
+#: src/Admin/AdminPage.php:1098
+#, php-format
+msgid "%1$d of %2$d posts processed (%3$s%%)"
+msgstr "%1$d de %2$d entradas procesadas (%3$s%%)"
+
+#: src/Admin/AdminPage.php:1106
+#, php-format
+msgid "%d processing now"
+msgstr "%d procesándose ahora"
+
+#: src/Admin/AdminPage.php:1118
+msgid "Reprocess All Posts"
+msgstr "Reprocesar todas las entradas"
+
+#: src/Admin/AdminPage.php:1132
+msgid "How the Queue Works"
+msgstr "Cómo funciona la cola"
+
+#: src/Admin/AdminPage.php:1135
+msgid "Priority (1-100)"
+msgstr "Prioridad (1-100)"
+
+#: src/Admin/AdminPage.php:1136
+msgid ""
+"Lower number = processed first. New posts get priority 10 (processed before "
+"bulk reprocessing at priority 50)."
+msgstr ""
+"Número menor = se procesa primero. Las entradas nuevas reciben prioridad 10 "
+"(se procesan antes del reprocesamiento masivo con prioridad 50)."
+
+#: src/Admin/AdminPage.php:1139
+msgid "Processing Order"
+msgstr "Orden de procesamiento"
+
+#: src/Admin/AdminPage.php:1140
+msgid ""
+"Posts are processed by priority (ascending), then by scheduled date (newest "
+"first). This ensures new content gets links before old content during bulk "
+"operations."
+msgstr ""
+"Las entradas se procesan por prioridad (ascendente) y luego por fecha programada "
+"(las más recientes primero). Esto asegura que el contenido nuevo reciba enlaces "
+"antes que el contenido antiguo durante operaciones masivas."
+
+#: src/Admin/AdminPage.php:1143
+msgid "Retries"
+msgstr "Reintentos"
+
+#: src/Admin/AdminPage.php:1144
+msgid ""
+"Failed posts are retried up to 3 times automatically. After 3 failures, they "
+"remain in \"Failed\" status until you manually retry them."
+msgstr ""
+"Las entradas fallidas se reintentan automáticamente hasta 3 veces. Después de "
+"3 fallos, permanecen en estado \"Fallido\" hasta que las reintentas manualmente."
+
+#: src/Admin/AdminPage.php:1147
+msgid "Background Processing"
+msgstr "Procesamiento en segundo plano"
+
+#: src/Admin/AdminPage.php:1150
+#, php-format
+msgid ""
+"Action Scheduler processes %1$d posts per batch with up to %2$d concurrent "
+"jobs. This runs in the background without affecting your site speed."
+msgstr ""
+"Action Scheduler procesa %1$d entradas por lote con hasta %2$d trabajos "
+"concurrentes. Esto se ejecuta en segundo plano sin afectar la velocidad de tu sitio."
+
+#: src/Admin/AdminPage.php:1170
+msgid "Search by post title or ID..."
+msgstr "Buscar por título de entrada o ID..."
+
+#: src/Admin/AdminPage.php:1183
+msgid "Attempts"
+msgstr "Intentos"
+
+#: src/Admin/AdminPage.php:1184
+msgid "Scheduled At"
+msgstr "Programado en"
+
+#: src/Admin/AdminPage.php:1185
+msgid "Processed At"
+msgstr "Procesado en"
+
+#: src/Admin/AdminPage.php:1191
+msgid "Queue is empty."
+msgstr "La cola está vacía."
+
+#: src/Admin/AdminPage.php:1236
+#, php-format
+msgid "%d item"
+msgid_plural "%d items"
+msgstr[0] "%d elemento"
+msgstr[1] "%d elementos"
+
+#: src/Admin/AdminPage.php:1309 src/Admin/AdminPage.php:1330
+msgid "Add Exclusion"
+msgstr "Añadir exclusión"
+
+#: src/Admin/AdminPage.php:1319
+msgid "URL Pattern"
+msgstr "Patrón de URL"
+
+#: src/Admin/AdminPage.php:1325 src/Admin/AdminPage.php:1371
+msgid "Value"
+msgstr "Valor"
+
+#: src/Admin/AdminPage.php:1341
+msgid "Quick Add"
+msgstr "Añadir rápido"
+
+#: src/Admin/AdminPage.php:1342
+msgid "Common exclusions you might want to add:"
+msgstr "Exclusiones comunes que podrías querer añadir:"
+
+#: src/Admin/AdminPage.php:1345
+msgid "Exclude Homepage"
+msgstr "Excluir página de inicio"
+
+#: src/Admin/AdminPage.php:1348
+msgid "Exclude Contact Page"
+msgstr "Excluir página de contacto"
+
+#: src/Admin/AdminPage.php:1351
+msgid "Exclude All Pages"
+msgstr "Excluir todas las páginas"
+
+#: src/Admin/AdminPage.php:1361
+msgid "Search exclusions..."
+msgstr "Buscar exclusiones..."
+
+#: src/Admin/AdminPage.php:1362
+msgid "Search"
+msgstr "Buscar"
+
+#: src/Admin/AdminPage.php:1372
+msgid "Created At"
+msgstr "Creado en"
+
+#: src/Admin/AdminPage.php:1379
+msgid "No exclusions configured."
+msgstr "No hay exclusiones configuradas."
+
+#: src/Admin/AdminPage.php:1405
+#, php-format
+msgid "%d exclusion"
+msgid_plural "%d exclusions"
+msgstr[0] "%d exclusión"
+msgstr[1] "%d exclusiones"
+
+#: src/Admin/AdminPage.php:1463
+msgid "Link Limits"
+msgstr "Límites de enlaces"
+
+#: src/Admin/AdminPage.php:1467
+msgid "Max links per post"
+msgstr "Máximo de enlaces por entrada"
+
+#: src/Admin/AdminPage.php:1471
+msgid ""
+"Total maximum number of auto-inserted links (internal + affiliate + entity) "
+"per post. Recommended: 5-15 for SEO best practices."
+msgstr ""
+"Número máximo total de enlaces auto-insertados (internos + afiliados + entidad) "
+"por entrada. Recomendado: 5-15 para buenas prácticas de SEO."
+
+#: src/Admin/AdminPage.php:1476
+msgid "Max links per 1000 words"
+msgstr "Máximo de enlaces por 1000 palabras"
+
+#: src/Admin/AdminPage.php:1480
+msgid ""
+"Scales link density based on content length. A 2000-word post with this set "
+"to 5 would get up to 10 links. Prevents over-linking short posts."
+msgstr ""
+"Ajusta la densidad de enlaces según la longitud del contenido. Una entrada de "
+"2000 palabras con este valor en 5 obtendría hasta 10 enlaces. Evita el exceso "
+"de enlaces en entradas cortas."
+
+#: src/Admin/AdminPage.php:1485
+msgid "Max affiliate links per post"
+msgstr "Máximo de enlaces de afiliado por entrada"
+
+#: src/Admin/AdminPage.php:1489
+msgid ""
+"Hard cap on affiliate links per post. Affiliate links always include rel="
+"\"sponsored nofollow\" automatically."
+msgstr ""
+"Límite máximo de enlaces de afiliado por entrada. Los enlaces de afiliado "
+"siempre incluyen rel=\"sponsored nofollow\" automáticamente."
+
+#: src/Admin/AdminPage.php:1494
+msgid "Affiliate ratio limit (%)"
+msgstr "Límite de proporción de afiliados (%)"
+
+#: src/Admin/AdminPage.php:1498
+msgid "Maximum percentage of links that can be affiliate."
+msgstr "Porcentaje máximo de enlaces que pueden ser de afiliado."
+
+#: src/Admin/AdminPage.php:1503
+msgid "Min distance between links (chars)"
+msgstr "Distancia mínima entre enlaces (caracteres)"
+
+#: src/Admin/AdminPage.php:1507
+msgid ""
+"Minimum character spacing between two auto-inserted links. Prevents "
+"clustering of links in the same paragraph. Set to 0 to disable."
+msgstr ""
+"Espaciado mínimo de caracteres entre dos enlaces auto-insertados. Evita la "
+"acumulación de enlaces en el mismo párrafo. Establece 0 para desactivar."
+
+#: src/Admin/AdminPage.php:1512
+msgid "Min content length (chars)"
+msgstr "Longitud mínima del contenido (caracteres)"
+
+#: src/Admin/AdminPage.php:1516
+msgid "Posts shorter than this will be skipped."
+msgstr "Las entradas más cortas que esto serán omitidas."
+
+#: src/Admin/AdminPage.php:1521
+msgid "Post Types"
+msgstr "Tipos de entrada"
+
+#: src/Admin/AdminPage.php:1524
+msgid "Supported post types"
+msgstr "Tipos de entrada compatibles"
+
+#: src/Admin/AdminPage.php:1526
+msgid ""
+"Select which post types should have automatic links inserted. Only checked "
+"types will be processed by the queue and engine."
+msgstr ""
+"Selecciona qué tipos de entrada deben tener enlaces automáticos insertados. "
+"Solo los tipos marcados serán procesados por la cola y el motor."
+
+#: src/Admin/AdminPage.php:1543
+msgid "Batch size"
+msgstr "Tamaño del lote"
+
+#: src/Admin/AdminPage.php:1547
+msgid "Posts processed per Action Scheduler batch."
+msgstr "Entradas procesadas por lote de Action Scheduler."
+
+#: src/Admin/AdminPage.php:1552
+msgid "Concurrency"
+msgstr "Concurrencia"
+
+#: src/Admin/AdminPage.php:1556
+msgid "Max concurrent Action Scheduler jobs."
+msgstr "Máximo de trabajos concurrentes de Action Scheduler."
+
+#: src/Admin/AdminPage.php:1561
+msgid "Cache"
+msgstr "Caché"
+
+#: src/Admin/AdminPage.php:1565
+msgid "Cache TTL internal/entity (hours)"
+msgstr "TTL de caché interno/entidad (horas)"
+
+#: src/Admin/AdminPage.php:1569
+msgid ""
+"How long to cache internal and entity rules before refreshing from the "
+"database. Longer TTL = fewer DB queries, but rule changes take longer to "
+"appear on the frontend."
+msgstr ""
+"Cuánto tiempo mantener en caché las reglas internas y de entidad antes de "
+"refrescar desde la base de datos. Mayor TTL = menos consultas a la base de datos, "
+"pero los cambios en las reglas tardan más en aparecer en el frontend."
+
+#: src/Admin/AdminPage.php:1574
+msgid "Cache TTL affiliate (hours)"
+msgstr "TTL de caché de afiliados (horas)"
+
+#: src/Admin/AdminPage.php:1578
+msgid ""
+"Separate cache TTL for affiliate rules. Typically shorter than internal "
+"since affiliate URLs/parameters may change more frequently."
+msgstr ""
+"TTL de caché separado para reglas de afiliados. Generalmente más corto que "
+"el interno, ya que las URLs/parámetros de afiliados pueden cambiar con más frecuencia."
+
+#: src/Admin/AdminPage.php:1585
+msgid "Save Settings"
+msgstr "Guardar ajustes"
+
+#: src/Admin/AdminPage.php:1625
+msgid "Settings saved."
+msgstr "Ajustes guardados."
+
+#: src/Admin/AdminPage.php:1634 src/Admin/AdminPage.php:1677
+msgid "Keyword and Target URL are required."
+msgstr "La palabra clave y la URL de destino son obligatorias."
+
+#: src/Admin/AdminPage.php:1653 src/Admin/KeywordMetaBox.php:373
+#: src/Api/RulesController.php:205
+msgid "Failed to create rule."
+msgstr "Error al crear la regla."
+
+#: src/Admin/AdminPage.php:1660
+msgid "Rule created successfully."
+msgstr "Regla creada correctamente."
+
+#: src/Admin/AdminPage.php:1670 src/Admin/AdminPage.php:1712
+#: src/Admin/AdminPage.php:1727 src/Admin/KeywordMetaBox.php:390
+msgid "Invalid rule ID."
+msgstr "ID de regla no válido."
+
+#: src/Admin/AdminPage.php:1695
+msgid "Failed to update rule."
+msgstr "Error al actualizar la regla."
+
+#: src/Admin/AdminPage.php:1702
+msgid "Rule updated successfully."
+msgstr "Regla actualizada correctamente."
+
+#: src/Admin/AdminPage.php:1719
+msgid "Rule deleted."
+msgstr "Regla eliminada."
+
+#: src/Admin/AdminPage.php:1738
+msgid "Rule toggled."
+msgstr "Regla alternada."
+
+#: src/Admin/AdminPage.php:1751
+msgid "Invalid exclusion data."
+msgstr "Datos de exclusión no válidos."
+
+#: src/Admin/AdminPage.php:1760
+msgid "Exclusion created."
+msgstr "Exclusión creada."
+
+#: src/Admin/AdminPage.php:1770
+msgid "Invalid exclusion ID."
+msgstr "ID de exclusión no válido."
+
+#: src/Admin/AdminPage.php:1776 src/Api/ExclusionsController.php:106
+msgid "Exclusion not found."
+msgstr "Exclusión no encontrada."
+
+#: src/Admin/AdminPage.php:1779
+msgid "Exclusion deleted."
+msgstr "Exclusión eliminada."
+
+#: src/Admin/AdminPage.php:1806
+msgid "Unknown bulk action."
+msgstr "Acción masiva desconocida."
+
+#: src/Admin/AdminPage.php:1841 src/Api/QueueController.php:194
+#, php-format
+msgid "%d posts enqueued for reprocessing."
+msgstr "%d entradas encoladas para reprocesamiento."
+
+#: src/Admin/AdminPage.php:1868 src/Api/QueueController.php:230
+#, php-format
+msgid "%d failed items reset for retry."
+msgstr "%d elementos fallidos restablecidos para reintento."
+
+#: src/Admin/AdminPage.php:1883 src/Api/QueueController.php:255
+#, php-format
+msgid "%d completed items cleared."
+msgstr "%d elementos completados limpiados."
+
+#: src/Admin/AdminPage.php:1895 src/Admin/AdminPage.php:1918
+msgid "No rules selected."
+msgstr "No se seleccionaron reglas."
+
+#: src/Admin/AdminPage.php:1906
+#, php-format
+msgid "%d rules deleted."
+msgstr "%d reglas eliminadas."
+
+#: src/Admin/AdminPage.php:1927
+msgid "activated"
+msgstr "activadas"
+
+#: src/Admin/AdminPage.php:1927
+msgid "deactivated"
+msgstr "desactivadas"
+
+#: src/Admin/AdminPage.php:1931
+#, php-format
+msgid "%1$d rules %2$s."
+msgstr "%1$d reglas %2$s."
+
+#: src/Admin/KeywordMetaBox.php:55
+msgid "LeanAutoLinks Keywords"
+msgstr "Palabras clave de LeanAutoLinks"
+
+#: src/Admin/KeywordMetaBox.php:98 src/Admin/KeywordMetaBox.php:233
+msgid "Remove this keyword rule?"
+msgstr "¿Eliminar esta regla de palabra clave?"
+
+#: src/Admin/KeywordMetaBox.php:99 src/Admin/KeywordMetaBox.php:234
+msgid "An error occurred."
+msgstr "Ocurrió un error."
+
+#: src/Admin/KeywordMetaBox.php:100 src/Admin/KeywordMetaBox.php:235
+#: src/Admin/KeywordMetaBox.php:368
+msgid "Rule created. Post will be reprocessed."
+msgstr "Regla creada. La entrada será reprocesada."
+
+#: src/Admin/KeywordMetaBox.php:101 src/Admin/KeywordMetaBox.php:236
+#: src/Admin/KeywordMetaBox.php:395
+msgid "Rule removed."
+msgstr "Regla eliminada."
+
+#: src/Admin/KeywordMetaBox.php:143 src/Admin/KeywordMetaBox.php:227
+msgid "Applied Keywords"
+msgstr "Palabras clave aplicadas"
+
+#: src/Admin/KeywordMetaBox.php:158 src/Admin/KeywordMetaBox.php:240
+msgid "No keywords linked in this post yet."
+msgstr "Aún no hay palabras clave enlazadas en esta entrada."
+
+#: src/Admin/KeywordMetaBox.php:164 src/Admin/KeywordMetaBox.php:226
+msgid "Keywords pointing here"
+msgstr "Palabras clave que apuntan aquí"
+
+#: src/Admin/KeywordMetaBox.php:172 src/Admin/KeywordMetaBox.php:237
+msgid "Remove rule"
+msgstr "Eliminar regla"
+
+#: src/Admin/KeywordMetaBox.php:180 src/Admin/KeywordMetaBox.php:187
+#: src/Admin/KeywordMetaBox.php:228
+msgid "Add Keyword"
+msgstr "Añadir palabra clave"
+
+#: src/Admin/KeywordMetaBox.php:182 src/Admin/KeywordMetaBox.php:229
+msgid "Other posts containing this keyword will link here."
+msgstr "Otras entradas que contengan esta palabra clave enlazarán aquí."
+
+#: src/Admin/KeywordMetaBox.php:185 src/Admin/KeywordMetaBox.php:231
+msgid "Keyword..."
+msgstr "Palabra clave..."
+
+#: src/Admin/KeywordMetaBox.php:230
+msgid "Add"
+msgstr "Añadir"
+
+#: src/Admin/KeywordMetaBox.php:232 src/Admin/KeywordMetaBox.php:333
+#: src/Api/RulesController.php:177
+msgid "Keyword is required."
+msgstr "La palabra clave es obligatoria."
+
+#: src/Admin/KeywordMetaBox.php:238
+msgid "Loading..."
+msgstr "Cargando..."
+
+#: src/Admin/KeywordMetaBox.php:239
+msgid "No keyword rules target this post yet."
+msgstr "Aún no hay reglas de palabra clave que apunten a esta entrada."
+
+#: src/Admin/KeywordMetaBox.php:261 src/Admin/KeywordMetaBox.php:337
+msgid "Invalid post."
+msgstr "Entrada no válida."
+
+#: src/Admin/KeywordMetaBox.php:345
+msgid "Could not determine post URL. Save the post first."
+msgstr "No se pudo determinar la URL de la entrada. Guarda la entrada primero."
+
+#: src/Admin/DashboardWidget.php:37
+msgid "LeanAutoLinks Overview"
+msgstr "Resumen de LeanAutoLinks"
+
+#: src/Admin/DashboardWidget.php:160
+#, php-format
+msgid "%d active"
+msgstr "%d activas"
+
+#: src/Admin/DashboardWidget.php:166
+#, php-format
+msgid "Internal: %d"
+msgstr "Internas: %d"
+
+#: src/Admin/DashboardWidget.php:170
+#, php-format
+msgid "Entity: %d"
+msgstr "Entidad: %d"
+
+#: src/Admin/DashboardWidget.php:174
+#, php-format
+msgid "Affiliate: %d"
+msgstr "Afiliado: %d"
+
+#: src/Admin/DashboardWidget.php:185
+#, php-format
+msgid "%s today"
+msgstr "%s hoy"
+
+#: src/Admin/DashboardWidget.php:196
+#, php-format
+msgid "%d processing"
+msgstr "%d procesando"
+
+#: src/Admin/DashboardWidget.php:201
+#, php-format
+msgid "%d failed"
+msgstr "%d fallidos"
+
+#: src/Admin/DashboardWidget.php:208
+msgid "Performance"
+msgstr "Rendimiento"
+
+#: src/Admin/DashboardWidget.php:212
+msgid "Avg processing time (24h)"
+msgstr "Tiempo promedio de procesamiento (24h)"
+
+#: src/Admin/DashboardWidget.php:217
+msgid "No data in last 24h"
+msgstr "Sin datos en las últimas 24h"
+
+#: src/Admin/DashboardWidget.php:225
+msgid "Go to LeanAutoLinks"
+msgstr "Ir a LeanAutoLinks"
+
+#: src/Admin/DashboardWidget.php:229
+#, php-format
+msgid "v%s"
+msgstr "v%s"
+
+#: src/Api/RestController.php:78
+msgid "Current page of the collection."
+msgstr "Página actual de la colección."
+
+#: src/Api/RestController.php:84
+msgid "Maximum number of items per page."
+msgstr "Número máximo de elementos por página."
+
+#: src/Api/RulesController.php:180
+msgid "Target URL is required."
+msgstr "La URL de destino es obligatoria."
+
+#: src/Api/RulesController.php:185 src/Api/RulesController.php:239
+msgid "Rule type must be internal, affiliate, or entity."
+msgstr "El tipo de regla debe ser interno, afiliado o entidad."
+
+#: src/Api/RulesController.php:269
+msgid "No fields to update."
+msgstr "No hay campos para actualizar."
+
+#: src/Api/RulesController.php:327
+msgid "Expected a JSON array of rules."
+msgstr "Se esperaba un array JSON de reglas."
+
+#: src/Api/RulesController.php:337
+#, php-format
+msgid "Rule at index %d missing keyword or target_url."
+msgstr "La regla en el índice %d no tiene palabra clave o URL de destino."
+
+#: src/Api/ExclusionsController.php:73
+msgid "Type must be one of: post, url, keyword, post_type."
+msgstr "El tipo debe ser uno de: post, url, keyword, post_type."
+
+#: src/Api/ExclusionsController.php:78
+msgid "Value is required."
+msgstr "El valor es obligatorio."
+
+#: src/Api/ExclusionsController.php:87
+msgid "Failed to create exclusion."
+msgstr "Error al crear la exclusión."
+
+#: src/Api/QueueController.php:129
+msgid "No queue entry for this post."
+msgstr "No hay entrada en la cola para esta publicación."
+
+#: src/Api/HealthController.php:75
+#, php-format
+msgid "%d failed items in queue."
+msgstr "%d elementos fallidos en la cola."
+
+#: src/Api/HealthController.php:82
+msgid "Large queue backlog (>1000 pending)."
+msgstr "Gran acumulación en la cola (>1000 pendientes)."
+
+#: src/Api/HealthController.php:86
+msgid ""
+"No external object cache detected. Consider Redis or Memcached for better "
+"performance."
+msgstr ""
+"No se detectó caché de objetos externo. Considera Redis o Memcached para un "
+"mejor rendimiento."
+
+#: src/Api/HealthController.php:91
+msgid "Average processing time exceeds 5 seconds."
+msgstr "El tiempo promedio de procesamiento supera los 5 segundos."

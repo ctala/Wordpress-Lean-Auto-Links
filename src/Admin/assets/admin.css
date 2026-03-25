@@ -1,0 +1,442 @@
+/**
+ * LeanAutoLinks Admin Styles
+ *
+ * Minimal custom CSS that builds on WordPress native admin styles.
+ * Provides dashboard cards, status badges, toggle buttons, and
+ * queue progress indicators.
+ */
+
+/* Dashboard Grid */
+.lw-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.lw-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.lw-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    color: #646970;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.lw-stat-number {
+    font-size: 36px;
+    font-weight: 600;
+    color: #1d2327;
+    line-height: 1.2;
+    margin-bottom: 4px;
+}
+
+/* Health Card */
+.lw-card-health {
+    border-left: 4px solid #00a32a;
+}
+
+.lw-card-health.lw-health-warning {
+    border-left-color: #dba617;
+}
+
+.lw-card-health.lw-health-critical {
+    border-left-color: #d63638;
+}
+
+.lw-health-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+}
+
+.lw-health-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #00a32a;
+}
+
+.lw-health-warning .lw-health-dot {
+    background: #dba617;
+}
+
+.lw-health-critical .lw-health-dot {
+    background: #d63638;
+}
+
+.lw-notice-text {
+    color: #646970;
+    font-size: 12px;
+    margin-top: 8px;
+}
+
+/* Badges */
+.lw-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.6;
+    background: #f0f0f1;
+    color: #50575e;
+}
+
+.lw-badge-green {
+    background: #edfaef;
+    color: #00a32a;
+}
+
+.lw-badge-blue {
+    background: #e7f2fa;
+    color: #0073aa;
+}
+
+.lw-badge-yellow {
+    background: #fef8e7;
+    color: #996800;
+}
+
+.lw-badge-red {
+    background: #fce8e8;
+    color: #d63638;
+}
+
+.lw-badge-gray {
+    background: #f0f0f1;
+    color: #646970;
+}
+
+/* Toggle Switch */
+.lw-toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 22px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    vertical-align: middle;
+}
+
+.lw-toggle-track {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #a7aaad;
+    border-radius: 11px;
+    transition: background-color 0.2s ease;
+}
+
+.lw-toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.lw-toggle-switch.lw-active .lw-toggle-track {
+    background: #00a32a;
+}
+
+.lw-toggle-switch.lw-active .lw-toggle-thumb {
+    transform: translateX(18px);
+}
+
+.lw-toggle-switch:hover .lw-toggle-track {
+    opacity: 0.85;
+}
+
+.lw-toggle-label {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 12px;
+    color: #646970;
+    vertical-align: middle;
+}
+
+/* Legacy toggle (hidden, kept for backwards compat) */
+.lw-toggle-btn {
+    display: none;
+}
+
+/* Sections */
+.lw-section {
+    margin-bottom: 24px;
+}
+
+.lw-section h2 {
+    margin-bottom: 12px;
+}
+
+/* Queue Stats Bar */
+.lw-queue-stats-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+}
+
+.lw-stat-item {
+    padding: 4px 12px;
+    border-radius: 3px;
+    font-size: 13px;
+}
+
+.lw-stat-blue {
+    background: #e7f2fa;
+    color: #0073aa;
+}
+
+.lw-stat-yellow {
+    background: #fef8e7;
+    color: #996800;
+}
+
+.lw-stat-green {
+    background: #edfaef;
+    color: #00a32a;
+}
+
+.lw-stat-red {
+    background: #fce8e8;
+    color: #d63638;
+}
+
+/* Segmented Progress Bar */
+.lw-progress-segmented {
+    display: flex;
+    height: 28px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    background: #f0f0f1;
+}
+
+.lw-progress-segment {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    transition: width 0.5s ease;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.lw-progress-done {
+    background: #00a32a;
+}
+
+.lw-progress-active {
+    background: #dba617;
+    animation: lw-pulse 1.5s ease-in-out infinite;
+}
+
+.lw-progress-failed {
+    background: #d63638;
+}
+
+.lw-progress-pending {
+    background: #c3c4c7;
+    color: #50575e;
+}
+
+.lw-progress-label {
+    font-size: 13px;
+    color: #50575e;
+    margin-bottom: 20px;
+}
+
+.lw-processing-pulse {
+    color: #996800;
+    font-weight: 500;
+    animation: lw-text-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes lw-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+@keyframes lw-text-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.lw-queue-idle {
+    color: #996800;
+    font-style: italic;
+}
+
+/* Legacy Progress Bar */
+.lw-progress-bar-wrapper {
+    background: #f0f0f1;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    height: 24px;
+}
+
+.lw-progress-bar {
+    background: #0073aa;
+    color: #fff;
+    height: 100%;
+    text-align: center;
+    line-height: 24px;
+    font-size: 12px;
+    font-weight: 500;
+    transition: width 0.5s ease;
+    min-width: 30px;
+    border-radius: 4px 0 0 4px;
+}
+
+/* Info Box */
+.lw-info-box {
+    background: #f6f7f7;
+    border: 1px solid #c3c4c7;
+    border-left: 4px solid #0073aa;
+    border-radius: 0 4px 4px 0;
+    padding: 16px 20px;
+}
+
+.lw-info-box h3 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    color: #1d2327;
+}
+
+.lw-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.lw-info-item {
+    font-size: 13px;
+}
+
+.lw-info-item strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #1d2327;
+}
+
+.lw-info-item p {
+    margin: 0;
+    color: #50575e;
+    line-height: 1.5;
+}
+
+/* Status Messages */
+.lw-status-message {
+    padding: 8px 12px;
+    margin: 8px 0;
+    border-left: 4px solid #00a32a;
+    background: #edfaef;
+    border-radius: 0 3px 3px 0;
+}
+
+.lw-status-message.lw-error {
+    border-left-color: #d63638;
+    background: #fce8e8;
+}
+
+/* Inline Form */
+.lw-inline-form .form-table td {
+    padding: 8px 10px;
+    vertical-align: bottom;
+}
+
+.lw-inline-form .form-table label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 500;
+    font-size: 12px;
+    color: #50575e;
+}
+
+.lw-inline-form .required {
+    color: #d63638;
+}
+
+/* Modal */
+.lw-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 100000;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lw-modal-content {
+    background: #fff;
+    border-radius: 4px;
+    padding: 24px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.lw-modal-content h3 {
+    margin-top: 0;
+}
+
+/* Rules Table */
+.lw-rules-table .check-column {
+    width: 2.2em;
+    padding: 10px 0 10px 10px;
+}
+
+/* Quick Exclusion Buttons */
+.lw-quick-exclusion {
+    margin-right: 4px !important;
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+    .lw-dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .lw-inline-form .form-table td {
+        display: block;
+        padding: 4px 0;
+    }
+
+    .lw-queue-stats-bar {
+        flex-direction: column;
+        gap: 8px;
+    }
+}
